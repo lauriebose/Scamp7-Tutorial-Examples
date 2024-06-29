@@ -1,0 +1,172 @@
+#include <scamp7.hpp>
+#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+using namespace SCAMP7_PE;
+
+vs_stopwatch frame_timer;
+vs_stopwatch output_timer;
+
+void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
+{
+	int top_left_row = centre_y-height/2;
+	if(top_left_row < 0)
+	{
+		height += top_left_row;
+		top_left_row = 0;
+	}
+	int top_left_column = centre_x-width/2;
+	if(top_left_column < 0)
+	{
+		width += top_left_column;
+		top_left_column = 0;
+	}
+
+	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
+}
+
+int main()
+{
+    vs_init();
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //SETUP IMAGE DISPLAYS
+
+		int disp_size = 2;
+		auto display_00 = vs_gui_add_display("S0",0,0,disp_size);
+		auto display_01 = vs_gui_add_display("S0 after DNEWS operations",0,disp_size,disp_size);
+		auto display_10 = vs_gui_add_display("RN",disp_size,0,1);
+		auto display_11 = vs_gui_add_display("RS",disp_size,1,1);
+		auto display_12 = vs_gui_add_display("RE",disp_size,2,1);
+		auto display_13 = vs_gui_add_display("RW",disp_size,3,1);
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
+
+	    int DNEWS_iterations = 60;
+	    vs_gui_add_slider("DNEWS_iterations",0,128,DNEWS_iterations,&DNEWS_iterations);
+
+	    //Setup sliders for setting/clearing the content of the RN,RS,RE,RW DREG, which control the behaviour of DNEWS
+		int set_RN = 0;
+		vs_gui_add_switch("set_RN",set_RN == 1,&set_RN);
+		int set_RS = 1;
+		vs_gui_add_switch("set_RS",set_RS == 1,&set_RS);
+		int set_RE = 0;
+		vs_gui_add_switch("set_RE",set_RE == 1,&set_RE);
+		int set_RW= 0;
+		vs_gui_add_switch("set_RW",set_RW == 1,&set_RW);
+
+		//for toggling between using "DNEWS0" or "DNEWS1"
+		int use_DNEWS0 = 1;
+		vs_gui_add_switch("use_DNEWS0",1,&use_DNEWS0);
+
+
+    //CONTINOUS FRAME LOOP
+    while(true)
+    {
+        frame_timer.reset();//reset frame_timer
+
+    	vs_disable_frame_trigger();
+        vs_frame_loop_control();
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //GENERATE DATA IN DREG S0 TO DEMONSTRATE DNEWS OPERATION UPON
+
+			//generate 2 boxes and 1 point in various DREG
+			scamp7_load_point(S6,96,96);
+			DREG_load_centered_rect(S5,188,128,16,64);
+			DREG_load_centered_rect(S4,48,168,32,32);
+
+			//combine S6,S5,S4 contents together in S0
+			scamp7_kernel_begin();
+				MOV(S0,S6);
+				OR(S0,S5);
+				OR(S0,S4);
+			scamp7_kernel_end();
+
+        	//make a copy of S0 in S1 to display for comparison display later
+        	scamp7_kernel_begin();
+				MOV(S1,S0);
+			scamp7_kernel_end();
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//PERFORM DNEWS OPERATIONS ON CONTENT OF S0
+
+			//Clear all DREG controlling DNEWS behaviour
+  			scamp7_kernel_begin();
+				CLR(RN,RS,RE,RW);//sets each DREG to 0 in all PEs
+			scamp7_kernel_end();
+
+			//Separately set each the DREG controlling DNEWS behaviour if toggled in the gui
+			if(set_RN)
+			{
+				scamp7_kernel_begin();
+					SET(RN);//sets DREG RN to 1 in all PES
+				scamp7_kernel_end();
+			}
+			if(set_RS)
+			{
+				scamp7_kernel_begin();
+					SET(RS);
+				scamp7_kernel_end();
+			}
+			if(set_RE)
+			{
+				scamp7_kernel_begin();
+					SET(RE);
+				scamp7_kernel_end();
+			}
+			if(set_RW)
+			{
+				scamp7_kernel_begin();
+					SET(RW);
+				scamp7_kernel_end();
+			}
+
+			//Repeatedly perform DNEWS operations on S0 for the selected number of iterations
+  			if(use_DNEWS0)
+  			{
+  				for(int n = 0 ; n < DNEWS_iterations ; n++)
+				{
+					scamp7_kernel_begin();
+						DNEWS0(S6,S0);//S6 = DNEWS(S0)
+						MOV(S0,S6);//Copy the results in S6 back into S0
+					scamp7_kernel_end();
+				}
+  			}
+  			else
+  			{
+  				for(int n = 0 ; n < DNEWS_iterations ; n++)
+				{
+					scamp7_kernel_begin();
+						DNEWS1(S6,S0);//S6 = DNEWS(S0)
+						MOV(S0,S6);//Copy the results in S6 back into S0
+					scamp7_kernel_end();
+				}
+  			}
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//OUTPUT IMAGES
+
+			output_timer.reset();
+
+			scamp7_output_image(S1,display_00);//display original unaltered DREG content
+			scamp7_output_image(S0,display_01);//display content after applying DNEWS
+
+			//display the content of registers controlling DNEWS behavior
+			scamp7_output_image(RN,display_10);
+			scamp7_output_image(RS,display_11);
+			scamp7_output_image(RE,display_12);
+			scamp7_output_image(RW,display_13);
+
+			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
+
+	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//OUTPUT TEXT INFO
+
+			int frame_time_microseconds = frame_timer.get_usec(); //get the time taken this frame
+			int max_possible_frame_rate = 1000000/frame_time_microseconds; //calculate the possible max FPS
+			int image_output_time_percentage = (output_time_microseconds*100)/frame_time_microseconds; //calculate the % of frame time which is used for image output
+			vs_post_text("frame time %d microseconds(%%%d image output), potential FPS ~%d \n",frame_time_microseconds,image_output_time_percentage,max_possible_frame_rate); //display this values on host
+    }
+    return 0;
+}
+
