@@ -40,11 +40,11 @@ int main()
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
 
-    int box1_x, box1_y, box1_width, box1_height;
-    vs_gui_add_slider("box1 x: ", 0, 255, 64, &box1_x);
-    vs_gui_add_slider("box1 y: ", 0, 255, 64, &box1_y);
-    vs_gui_add_slider("box1 width: ", 0, 128, 96, &box1_width);
-    vs_gui_add_slider("box1 height: ", 0, 128, 64, &box1_height);
+    int AREG_copy_operations = 0;
+    vs_gui_add_slider("AREG_copy_operations", 0, 128, AREG_copy_operations, &AREG_copy_operations);
+
+    int AREG_copy_register = 0;
+    vs_gui_add_slider("AREG_copy_register", 0, 4, AREG_copy_register, &AREG_copy_register);
 
 	auto gui_btn_clrs1 = vs_gui_add_button("CLR S1");
 	vs_on_gui_update(gui_btn_clrs1,[&](int32_t new_value)
@@ -67,40 +67,72 @@ int main()
 
 			scamp7_kernel_begin();
 				get_image(A,E);
+				mov(B,A);
 			scamp7_kernel_end();
 
-    	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//load box shape into DREG S0 & perform OR between DREG S1 & S0
+			if(AREG_copy_register == 0)
+			{
+				for(int n = 0 ; n < AREG_copy_operations ; n++)
+				{
+					scamp7_kernel_begin();
+						bus(C,B);
+						bus(B,C);
+					scamp7_kernel_end();
+				}
+			}
 
-			DREG_load_centered_rect(S0,box1_x,box1_y,box1_width,box1_height);
-			scamp7_kernel_begin();
-				OR(S1,S0);
-			scamp7_kernel_end();
+			if(AREG_copy_register == 1)
+			{
+				for(int n = 0 ; n < AREG_copy_operations ; n++)
+				{
+					scamp7_kernel_begin();
+						bus(D,B);
+						bus(B,D);
+					scamp7_kernel_end();
+				}
+			}
 
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//Example of conditional execution of AREG instructions using FLAG register
+			if(AREG_copy_register == 2)
+			{
+				for(int n = 0 ; n < AREG_copy_operations ; n++)
+				{
+					scamp7_kernel_begin();
+						bus(E,B);
+						bus(B,E);
+					scamp7_kernel_end();
+				}
+			}
 
-			scamp7_kernel_begin();
-				//copies S1 into FLAG, Identical to "MOV(FLAG,S1)"
-				WHERE(S0);
+			if(AREG_copy_register == 3)
+			{
+				for(int n = 0 ; n < AREG_copy_operations ; n++)
+				{
+					scamp7_kernel_begin();
+						bus(F,B);
+						bus(B,F);
+					scamp7_kernel_end();
+				}
+			}
 
-					//AREG instructions are only performed in PEs where FLAG == 1
-					//Thus "mov(B,A)" will now copy the captured image A, into B, ONLY where S1 == 1
-					mov(B,A);
+			if(AREG_copy_register == 4)
+			{
+				for(int n = 0 ; n < AREG_copy_operations ; n++)
+				{
+					scamp7_kernel_begin();
+						bus(NEWS,B);
+						bus(B,NEWS);
+					scamp7_kernel_end();
+				}
+			}
 
-				//sets FLAG = 1 in all PEs, Identical to "SET(FLAG)"
-				ALL();
-			scamp7_kernel_end();
+
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT RESULTS STORED IN VARIOUS REGISTERS
 
 	    	output_timer.reset();
-			output_areg_via_bitstack_DNEWS(A,display_00);
-			output_areg_via_bitstack_DNEWS(B,display_01);
-
-			scamp7_output_image(S0,display_10);
-			scamp7_output_image(S1,display_11);
+			scamp7_output_image(A,display_00);
+			scamp7_output_image(B,display_01);
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

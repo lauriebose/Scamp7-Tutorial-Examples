@@ -44,7 +44,7 @@ int main()
 	    int DNEWS_iterations = 60;
 	    vs_gui_add_slider("DNEWS_iterations",0,128,DNEWS_iterations,&DNEWS_iterations);
 
-	    //Setup sliders for setting/clearing the content of the RN,RS,RE,RW DREG, which control the behaviour of DNEWS
+	    //Setup switches for setting/clearing the content of the RN,RS,RE,RW DREG, which control the behaviour of DNEWS
 		int set_RN = 0;
 		vs_gui_add_switch("set_RN",set_RN == 1,&set_RN);
 		int set_RS = 1;
@@ -55,8 +55,8 @@ int main()
 		vs_gui_add_switch("set_RW",set_RW == 1,&set_RW);
 
 		//for toggling between using "DNEWS0" or "DNEWS1"
-		int use_DNEWS0 = 1;
-		vs_gui_add_switch("use_DNEWS0",1,&use_DNEWS0);
+		int use_DNEWS1 = 0;
+		vs_gui_add_switch("use_DNEWS1",1,&use_DNEWS1);
 
 
     //CONTINOUS FRAME LOOP
@@ -122,7 +122,7 @@ int main()
 			}
 
 			//Repeatedly perform DNEWS operations on S0 for the selected number of iterations
-  			if(use_DNEWS0)
+  			if(!use_DNEWS1)
   			{
   				for(int n = 0 ; n < DNEWS_iterations ; n++)
 				{

@@ -4,7 +4,7 @@ using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch shift_timer;
+vs_stopwatch errode_expand_timer;
 
 int main()
 {
@@ -24,17 +24,18 @@ int main()
 		int threshold_value = 64;
 		vs_gui_add_slider("threshold_value",-127,127,threshold_value,&threshold_value);
 
+		//for controlling the shift applied to the DREG content
 	    int shift_x = 40;
 	    vs_gui_add_slider("shift_x",-255,255,shift_x,&shift_x);
 	    int shift_y = 40;
 	    vs_gui_add_slider("shift_y",-255,255,shift_y,&shift_y);
 
-		int use_DNEWS0 = 1;
-		vs_gui_add_switch("use_DNEWS0",1,&use_DNEWS0);
+		//for toggling between using "DNEWS0" or "DNEWS1"
+		int use_DNEWS1 = 0;
+		vs_gui_add_switch("use_DNEWS1",1,&use_DNEWS1);
 
-
-		int output_just_shifted_img = 1;
-		vs_gui_add_switch("output_just_shifted_img",1,&output_just_shifted_img);
+		int output_just_shifted_img = 0;
+		vs_gui_add_switch("output_just_shifted_img",output_just_shifted_img == 1,&output_just_shifted_img);
 
     //CONTINOUS FRAME LOOP
     while(true)
@@ -64,7 +65,7 @@ int main()
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//shift content of S1 using DNEWS
 
-  			shift_timer.reset();
+  			errode_expand_timer.reset();
 
   			//First shift horizontally
   			{
@@ -88,7 +89,7 @@ int main()
 
 				//Now after setting up the RN,RS,RE,RW correctly, shift the content of S1 horizontally by repeatedly performing DNEWS operations
 				int iteration = abs(shift_x);
-				if(use_DNEWS0)
+				if(!use_DNEWS1)
 				{
 					for(int n = 0 ; n < iteration ; n++)
 					{
@@ -132,7 +133,7 @@ int main()
 
 				//Now after setting up the RN,RS,RE,RW correctly, shift the content of S1 vertically by repeatedly performing DNEWS operations
 				int iteration = abs(shift_y);
-				if(use_DNEWS0)
+				if(!use_DNEWS1)
 				{
 					for(int n = 0 ; n < iteration ; n++)
 					{
@@ -154,7 +155,7 @@ int main()
 				}
   			}
 
-  			int time_spent_shifting = shift_timer.get_usec();
+  			int time_spent_shifting = errode_expand_timer.get_usec();
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -180,4 +181,3 @@ int main()
     }
     return 0;
 }
-

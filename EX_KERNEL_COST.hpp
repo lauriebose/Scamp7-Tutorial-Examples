@@ -4,7 +4,7 @@ using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch shift_timer;
+vs_stopwatch errode_expand_timer;
 
 
 void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
@@ -44,6 +44,9 @@ int main()
 	    int kernel_selection = 0;
 	    vs_gui_add_slider("kernel_selection",0,8,kernel_selection,&kernel_selection);
 
+	    int kernel_calls = 0;
+	    vs_gui_add_slider("kernel_calls",0,1000,kernel_calls,&kernel_calls);
+
     //CONTINOUS FRAME LOOP
     while(true)
     {
@@ -71,10 +74,31 @@ int main()
 				SET(RE);
 			scamp7_kernel_end();
 
+
+//			vs_post_text("perform 100 kernels of length 2\n");
+//			shift_timer.reset();
+//			for(int n = 0 ; n < 500 ; n++)
+//			{
+//				scamp7_kernel_begin();
+//					MOV(S1,S6);
+//				scamp7_kernel_end();
+//			}
+//			vs_post_text("time for 100 kernel of 1 instruction %d microseconds \n", shift_timer.get_usec());
+//
+//			vs_post_text("perform 100 kernels of length 2\n");
+//			shift_timer.reset();
+//			scamp7_kernel_begin();
+//			for(int n = 0 ; n < 500 ; n++)
+//			{
+//				MOV(S1,S6);
+//			}
+//			scamp7_kernel_end();
+//			vs_post_text("time for 1 kernel of 100 instruction %d microseconds \n", shift_timer.get_usec());
+
 			if(kernel_selection == 0)
 			{
 				vs_post_text("perform 100 kernels of length 2\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 100 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -82,139 +106,155 @@ int main()
 						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 			if(kernel_selection == 1)
 			{
 				vs_post_text("perform 50 kernels of length 4\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 50 ; n++)
 				{
 					scamp7_kernel_begin();
 						DNEWS1(S6,S1);
 						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 			if(kernel_selection == 2)
 			{
 				vs_post_text("perform 25 kernels of length 8\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 25 ; n++)
 				{
 					scamp7_kernel_begin();
 						DNEWS1(S6,S1);
 						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 			if(kernel_selection == 3)
 			{
 				vs_post_text("perform 20 kernels of length 10\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 20 ; n++)
 				{
 					scamp7_kernel_begin();
 						DNEWS1(S6,S1);
 						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
+						DNEWS1(S6,S1);
+						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 
 			if(kernel_selection == 4)
 			{
 				vs_post_text("perform 10 kernels of length 20\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 10 ; n++)
 				{
 					scamp7_kernel_begin();
 						//this loop is constant and never changes behaviour, and thus it is "safe" to put it inside of the kernel block
 						//really this is just to avoid writing out the two instructions in the loop 10 times.... -_-
-						for(int i = 0; i < 1 ; i++)
+						for(int i = 0; i < 10 ; i++)
 						{
 							DNEWS1(S6,S1);
 							MOV(S1,S6);
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 			if(kernel_selection == 5)
 			{
 				vs_post_text("perform 5 kernels of length 40\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 5 ; n++)
 				{
 					scamp7_kernel_begin();
 						//loop to avoid writing this out 20 times... -__-
-						for(int i = 0; i < 1 ; i++)
+						for(int i = 0; i < 20 ; i++)
 						{
 							DNEWS1(S6,S1);
 							MOV(S1,S6);
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 			if(kernel_selection == 6)
 			{
 				vs_post_text("perform 4 kernels of length 50\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 4 ; n++)
 				{
 					scamp7_kernel_begin();
 						//loop to avoid writing this out 25 times... -__-
-						for(int i = 0; i < 1 ; i++)
+						for(int i = 0; i < 25 ; i++)
 						{
 							DNEWS1(S6,S1);
 							MOV(S1,S6);
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 
 			if(kernel_selection == 7)
 			{
 				vs_post_text("perform 2 kernels of length 100\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				for(int n = 0 ; n < 2 ; n++)
 				{
 					scamp7_kernel_begin();
 						//loop to avoid writing this out 50 times... -___-
-						for(int i = 0; i < 1 ; i++)
+						for(int i = 0; i < 50 ; i++)
 						{
 							DNEWS1(S6,S1);
 							MOV(S1,S6);
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 			if(kernel_selection == 8)
 			{
 				vs_post_text("perform 1 kernel of length 200\n");
-				shift_timer.reset();
+				errode_expand_timer.reset();
 				scamp7_kernel_begin();
 					//loop to avoid writing this out 100 times!
-					for(int i = 0; i < 1 ; i++)
+					for(int i = 0; i < 100 ; i++)
 					{
 						DNEWS1(S6,S1);
 						MOV(S1,S6);
 					}
 				scamp7_kernel_end();
-				time_spent_shifting = shift_timer.get_usec();
+				time_spent_shifting = errode_expand_timer.get_usec();
 			}
 
 			vs_post_text("time spent shifting %d \n",time_spent_shifting);

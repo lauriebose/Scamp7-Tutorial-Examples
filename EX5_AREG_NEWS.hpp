@@ -4,7 +4,7 @@ using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch shift_timer;
+vs_stopwatch errode_expand_timer;
 
 int main()
 {
@@ -39,7 +39,7 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //SHIFT AREG HORIZONTALLY
 
-			shift_timer.reset();
+			errode_expand_timer.reset();
 
 			if(shift_x > 0)
 			{
@@ -89,7 +89,7 @@ int main()
 				}
 			}
 
-			int time_spent_on_shifting = shift_timer.get_usec();
+			int time_spent_on_shifting = errode_expand_timer.get_usec();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //SUBTRACT SHIFTED IMAGE FROM ORIGINAL

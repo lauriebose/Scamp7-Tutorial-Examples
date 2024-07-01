@@ -1,5 +1,5 @@
 #define EX_KERNEL_COST -1
-
+#define EX_AREG_DECAY -2
 
 #define EX_IMAGE_CAPTURE_AND_AREG 1
 #define	EX_DREG_BASICS 2
@@ -9,8 +9,9 @@
 #define	EX_SIMPLE_EDGE_DETECTION 6
 #define	EX_DNEWS 7
 #define EX8_DREG_SHIFTING 8
+#define EX8_DREG_EXPAND_AND_ERODE 9
 
-#define selected_algo -1
+#define selected_algo 9
 
 
 #if selected_algo == 999
@@ -30,10 +31,12 @@
 	#include "EX7_DNEWS.hpp"
 #elif selected_algo == EX8_DREG_SHIFTING
 	#include "EX8_DREG_SHIFTING.hpp"
+#elif selected_algo == EX8_DREG_EXPAND_AND_ERODE
+	#include "EX9_DREG_EXPAND_AND_ERODE.hpp"
 
 
-
-
+#elif selected_algo == EX_AREG_DECAY
+	#include "EX_AREG_DECAY.hpp"
 #elif selected_algo == EX_KERNEL_COST
 	#include "EX_KERNEL_COST.hpp"
 #endif
