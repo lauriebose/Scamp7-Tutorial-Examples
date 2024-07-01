@@ -9,9 +9,10 @@
 #define	EX_SIMPLE_EDGE_DETECTION 6
 #define	EX_DNEWS 7
 #define EX8_DREG_SHIFTING 8
-#define EX8_DREG_EXPAND_AND_ERODE 9
+#define EX9_DREG_EXPAND_AND_ERODE 9
+#define EX10_HALF_SCALING 10
 
-#define selected_algo 9
+#define selected_algo 10
 
 
 #if selected_algo == 999
@@ -31,8 +32,10 @@
 	#include "EX7_DNEWS.hpp"
 #elif selected_algo == EX8_DREG_SHIFTING
 	#include "EX8_DREG_SHIFTING.hpp"
-#elif selected_algo == EX8_DREG_EXPAND_AND_ERODE
+#elif selected_algo == EX9_DREG_EXPAND_AND_ERODE
 	#include "EX9_DREG_EXPAND_AND_ERODE.hpp"
+#elif selected_algo == EX10_HALF_SCALING
+	#include "EX10_HALF_SCALING.hpp"
 
 
 #elif selected_algo == EX_AREG_DECAY
