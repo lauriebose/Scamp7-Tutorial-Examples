@@ -25,7 +25,7 @@ int main()
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
 
-	    int expansion_steps = 0;
+	    int expansion_steps = 20;
 	    vs_gui_add_slider("expansion_steps",0,50,expansion_steps,&expansion_steps);
 
 	    int erosion_steps = 0;
@@ -146,7 +146,7 @@ int main()
 			int frame_time_microseconds = frame_timer.get_usec(); //get the time taken this frame
 			int max_possible_frame_rate = 1000000/frame_time_microseconds; //calculate the possible max FPS
 			int image_output_time_percentage = (output_time_microseconds*100)/frame_time_microseconds; //calculate the % of frame time which is used for image output
-			vs_post_text("time spent shifting %d \n",time_spent_on_errode_expand);
+			vs_post_text("time spent on erode//exapand %d \n",time_spent_on_errode_expand);
 			vs_post_text("frame time %d microseconds(%%%d image output), potential FPS ~%d \n",frame_time_microseconds,image_output_time_percentage,max_possible_frame_rate); //display this values on host
     }
     return 0;

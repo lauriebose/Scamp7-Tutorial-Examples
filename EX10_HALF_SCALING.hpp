@@ -4,7 +4,7 @@ using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch errode_expand_timer;
+vs_stopwatch scaling_timer;
 
 void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height);
 
@@ -14,14 +14,14 @@ int main()
 
     int display_size = 2;
     auto display_00 = vs_gui_add_display("Captured Image",0,0,display_size);
-    auto display_01 = vs_gui_add_display("Shifted Image",0,display_size,display_size);
-    auto display_10 = vs_gui_add_display("Captured Image - Shifted Image",display_size,0,display_size);
-    auto display_11 = vs_gui_add_display("Captured Image - Shifted Image",display_size,display_size,display_size);
+    auto display_01 = vs_gui_add_display("RN",0,display_size,display_size);
+    auto display_02 = vs_gui_add_display("RS",0,2*display_size,display_size);
+    auto display_10 = vs_gui_add_display("Shifted Image Data",display_size,0,display_size);
+    auto display_11 = vs_gui_add_display("Rows to copy data from S0",display_size,display_size,display_size);
+    auto display_12 = vs_gui_add_display("Half Scaled Image",display_size,2*display_size,display_size);
 
-    int steps = 0;
-    vs_gui_add_slider("steps",0,64,steps,&steps);
-
-
+    int scaling_steps = 64;
+    vs_gui_add_slider("scaling_steps",0,64,scaling_steps,&scaling_steps);
 
     // Frame Loop
     while(1)
@@ -30,15 +30,6 @@ int main()
 
        	vs_disable_frame_trigger();
         vs_frame_loop_control();
-
-        scamp7_kernel_begin();
-			CLR(RN,RS,RE,RW);
-		scamp7_kernel_end();
-
-        DREG_load_centered_rect(RW,64,128,128,255);
-        DREG_load_centered_rect(RE,196,128,128,255);
-
-        DREG_load_centered_rect(S0,130,128,2,255);
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//capture new image into AREG A and create copy in B
@@ -50,54 +41,70 @@ int main()
 			scamp7_kernel_end();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //SHIFT AREG HORIZONTALLY
+        //PERFORM VERTICAL HALF SCALING
 
-			errode_expand_timer.reset();
+			scaling_timer.reset();
 
+			//setup the registers controlling DNEWS operation
+	        scamp7_kernel_begin();
+				CLR(RE,RW);
+			scamp7_kernel_end();
+	        DREG_load_centered_rect(RS,127,64,255,129);//Set RS in the top half of the PE array, will cause content in this half to move upwards
+	        DREG_load_centered_rect(RN,127,196,255,129);//Set RN in the bottom half of the PE array, will cause content in this half to move downwards
 
-			for(int x = 0; x < steps; x++)
+	        //load horizontal line splitting the PE array into two halves
+	        //S0 will give the rows of PEs at each step from which to copy shifted image data into the scaled result
+	        DREG_load_centered_rect(S0,128,130,255,2);
+
+			for(int x = 0; x < scaling_steps; x++)
 			{
 				//KERNEL SHIFTS B ONE "PIXE"L RIGHT
 				scamp7_kernel_begin();
 
 					WHERE(S0);
-						mov(C,B);
+						mov(C,B);//copy rows of data for the current step into the AREG for the scaled result
 					all();
 
-					WHERE(RE);
-						bus(NEWS,B);//NEWS = -B
-						bus(B,XW);//B = -NEWS OF WEST NEIGHBOR
+					//shift image data in the top half of the PE array down 1 pixel
+					WHERE(RN);
+						bus(NEWS,B);
+						bus(B,XS);
+//					ALL();//Not needs as next analogue operation is WHERE
 
-//					ALL();//Not needs as next operation is just setting the FLAG again anyway with WHERE
-					WHERE(RW);
-						bus(NEWS,B);//NEWS = -B
-						bus(B,XE);//B = -NEWS OF WEST NEIGHBOR
+					//shift image data in the bottom half of the PE array up 1 pixel
+					WHERE(RS);
+						bus(NEWS,B);
+						bus(B,XN);
 					ALL();
 
+					//perform DNEWS on S0 which stores the rows from which data is copied at each step
+					//move the row of 1s in the top half up, and that in the bottom half down
 					DNEWS0(S6,S0);
 					MOV(S0,S6);
 				scamp7_kernel_end();
 			}
 
-
-
-
-			int time_spent_on_shifting = errode_expand_timer.get_usec();
+			int time_spent_scaling = scaling_timer.get_usec();
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT REGISTERS AS IMAGES
 
         	output_timer.reset();
+        	scamp7_output_image(RN,display_01);
+			scamp7_output_image(RS,display_02);
+
 			output_areg_via_bitstack_DNEWS(A,display_00);//captured image
-			output_areg_via_bitstack_DNEWS(B,display_01);//shifted image
-			output_areg_via_bitstack_DNEWS(C,display_10);//captured image
-			scamp7_output_image(S0,display_11);//captured image - shifted image
+
+			output_areg_via_bitstack_DNEWS(B,display_10);//shifted image data
+			scamp7_output_image(S0,display_11);//rows from which to copy AREG data for current scaling step
+			output_areg_via_bitstack_DNEWS(C,display_12);//scaled image data
+
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT TEXT INFO
 
-	        vs_post_text("time spent on shifting %d microseconds\n",time_spent_on_shifting);
+	        vs_post_text("time spent on half scaling %d microseconds\n",time_spent_scaling);
 
 			int frame_time_microseconds = frame_timer.get_usec(); //get the time taken this frame
 			int max_possible_frame_rate = 1000000/frame_time_microseconds; //calculate the possible max FPS
@@ -125,3 +132,5 @@ void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, i
 
 	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
 }
+
+

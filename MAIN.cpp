@@ -1,5 +1,8 @@
 #define EX_KERNEL_COST -1
 #define EX_AREG_DECAY -2
+#define EX_AREG_SATURATION -3
+
+
 
 #define EX_IMAGE_CAPTURE_AND_AREG 1
 #define	EX_DREG_BASICS 2
@@ -11,8 +14,9 @@
 #define EX8_DREG_SHIFTING 8
 #define EX9_DREG_EXPAND_AND_ERODE 9
 #define EX10_HALF_SCALING 10
+#define EX_DREG_FLOODING 11
 
-#define selected_algo 10
+#define selected_algo 11
 
 
 #if selected_algo == 999
@@ -37,10 +41,14 @@
 #elif selected_algo == EX10_HALF_SCALING
 	#include "EX10_HALF_SCALING.hpp"
 
+#elif selected_algo == EX_DREG_FLOODING
+	#include "EX_DREG_FLOODING.hpp"
 
 #elif selected_algo == EX_AREG_DECAY
 	#include "EX_AREG_DECAY.hpp"
 #elif selected_algo == EX_KERNEL_COST
 	#include "EX_KERNEL_COST.hpp"
+#elif selected_algo == EX_AREG_SATURATION
+	#include "EX_AREG_SATURATION.hpp"
 #endif
 
