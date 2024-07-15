@@ -13,9 +13,9 @@ int main()
     //SETUP IMAGE DISPLAYS
 
 		int disp_size = 2;
-		auto display_00 = vs_gui_add_display("Captured Image",0,0,disp_size);
-		auto display_01 = vs_gui_add_display("Threshold",0,disp_size,disp_size);
-		auto display_02 = vs_gui_add_display("Binary Thresholded Image",0,disp_size*2,disp_size);
+		auto display_00 = vs_gui_add_display("Captured Image, AREG A",0,0,disp_size);
+		auto display_01 = vs_gui_add_display("Threshold, AREG C",0,disp_size,disp_size);
+		auto display_02 = vs_gui_add_display("Thresholded Image, DREG S0 (""where"" A-C > 0)",0,disp_size*2,disp_size);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
@@ -39,6 +39,7 @@ int main()
 
         	//load threshold value into C across all PEs
 			scamp7_in(C,threshold_value);
+
 			scamp7_kernel_begin();
 				//A = pixel data of latest frame, F = intermediate result
 				get_image(A,F);

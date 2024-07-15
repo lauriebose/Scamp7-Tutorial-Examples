@@ -1,22 +1,23 @@
 #include <scamp7.hpp>
 using namespace SCAMP7_PE;
 
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
+void DREG_load_centered_rect(dreg_t reg, int x, int y, int width, int height)
 {
-	int top_left_row = centre_y-height/2;
-	if(top_left_row < 0)
+	int top_row = y-height/2;
+	if(top_row < 0)
 	{
-		height += top_left_row;
-		top_left_row = 0;
+		height += top_row;
+		top_row = 0;
 	}
-	int top_left_column = centre_x-width/2;
-	if(top_left_column < 0)
+	int right_column = x-width/2;
+	if(right_column < 0)
 	{
-		width += top_left_column;
-		top_left_column = 0;
+		width += right_column;
+		right_column = 0;
 	}
-
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
+	int bottom_row = top_row+height;
+	int left_column = right_column+width;
+	scamp7_load_region(reg, top_row, right_column, bottom_row, left_column);
 }
 
 vs_stopwatch frame_timer;
@@ -29,8 +30,8 @@ int main()
     const int display_size = 1;
     vs_handle display_00 = vs_gui_add_display("S0 (box1)",0,0,2);
     vs_handle display_01 = vs_gui_add_display("S1 (box2)",0,2,2);
-    vs_handle display_10 = vs_gui_add_display("S0 AND S1",2,0,display_size);
-    vs_handle display_11 = vs_gui_add_display("S0 OR S1",2,display_size,display_size);
+    vs_handle display_10 = vs_gui_add_display("S0 OR S1",2,0,display_size);
+    vs_handle display_11 = vs_gui_add_display("S0 AND S1",2,display_size,display_size);
     vs_handle display_12 = vs_gui_add_display("NOT (S0 AND S1)",2,display_size*2,display_size);
     vs_handle display_13 = vs_gui_add_display("S0 XOR S1",2,display_size*3,display_size);
 
@@ -64,7 +65,7 @@ int main()
 
         	AND(S5,S0,S1);//S5 = box1 AND box2
 
-        	NOT(S4,S5);//S4 = NOT(S5) == NOT(box1 AND box2)
+        	NOT(S4,S5);//S4 = NOT(box1 AND box2)
 
         	AND(S3,S6,S4); //S3 = S6 AND S4 == (box1 OR box2) AND NOT(box1 and box1) == box1 XOR box2
         scamp7_kernel_end();

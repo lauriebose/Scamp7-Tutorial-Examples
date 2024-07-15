@@ -13,22 +13,6 @@ const dreg_t DREG_combined_edges = S0;
 const dreg_t DREG_vertical_edges = S1;
 const dreg_t DREG_horizontal_edges = S2;
 
-void get_adjusted_image_into_A(int offset = 0, int amp = 0)
-{
-	scamp7_in(F,offset);
-	scamp7_kernel_begin();
-		get_image(A,E);
-		add(A,A,F);
-		mov(F,A);
-	scamp7_kernel_end();
-	for(int n = 0 ; n < amp ; n++)
-	{
-		scamp7_kernel_begin();
-			add(A,A,F);
-		scamp7_kernel_end();
-	}
-}
-
 int main()
 {
     vs_init();
@@ -48,13 +32,6 @@ int main()
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
 
-    int image_offset = -30;
-    vs_gui_add_slider("image_offset x",-128,128,image_offset,&image_offset);
-    int image_amp = 0;
-    vs_gui_add_slider("image_amp x",0,10,image_amp,&image_amp);
-
-    int shift_size = 1;
-    vs_gui_add_slider("shift_size x",1,8,shift_size,&shift_size);
     int edge_threshold = 32;
     vs_gui_add_slider("edge_threshold x",0,127,edge_threshold,&edge_threshold);
 
@@ -69,25 +46,19 @@ int main()
     	vs_disable_frame_trigger();
         vs_frame_loop_control();
 
-        get_adjusted_image_into_A(image_offset,image_amp);
+    	scamp7_kernel_begin();
+    		get_image(A,E);
+    	scamp7_kernel_end();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //COMPUTE VERTICAL EDGE IMAGE
 
-			//COPY IMAGE AND SHIFT HORIZONTALLY
 			scamp7_kernel_begin();
-				mov(F,AREG_image);
-			scamp7_kernel_end();
-			for(int x = 0; x < shift_size; x++)
-			{
-				//SHIFT ONE "PIXEL" RIGHT
-				scamp7_kernel_begin();
-					bus(NEWS,F);
-					bus(F,XW);
-				scamp7_kernel_end();
-			}
-			//SAVE THE ABSOLUTE DIFFERENCE BETWEEN THE SHIFTED IMAGE AND ORIGINAL AS THE VERTICAL EDGES RESULT
-			scamp7_kernel_begin();
+				//COPY IMAGE TO F AND SHIFT ONE "PIXEL" RIGHT
+				bus(NEWS,AREG_image);
+				bus(F,XW);
+
+				//SAVE THE ABSOLUTE DIFFERENCE BETWEEN THE SHIFTED IMAGE AND ORIGINAL AS THE VERTICAL EDGES RESULT
 				sub(F,F,AREG_image);
 				abs(AREG_vertical_edges,F);
 			scamp7_kernel_end();
@@ -95,20 +66,12 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //COMPUTE HORIZONTAL EDGE IMAGE
 
-			//COPY IMAGE AND SHIFT VERTICALLY
 			scamp7_kernel_begin();
-				mov(F,AREG_image);
-			scamp7_kernel_end();
-			for(int y = 0; y < shift_size; y++)
-			{
-				//SHIFT ONE "PIXEL" UP
-				scamp7_kernel_begin();
-					bus(NEWS,F);
-					bus(F,XS);
-				scamp7_kernel_end();
-			}
-			//SAVE THE ABSOLUTE DIFFERENCE BETWEEN THE SHIFTED IMAGE AND ORIGINAL AS THE HORIZONTAL EDGES RESULT
-			scamp7_kernel_begin();
+				//COPY IMAGE TO F AND SHIFT ONE "PIXEL" UP
+				bus(NEWS,AREG_image);
+				bus(F,XS);
+
+				//SAVE THE ABSOLUTE DIFFERENCE BETWEEN THE SHIFTED IMAGE AND ORIGINAL AS THE HORIZONTAL EDGES RESULT
 				sub(F,F,AREG_image);
 				abs(AREG_horizontal_edges,F);
 			scamp7_kernel_end();
@@ -116,18 +79,24 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //THRESHOLD AREG EDGE DATA TO BINARY
 
+
 			scamp7_in(F,edge_threshold);//LOAD THRESHOLD INTO F
+
+			//THRESHOLD AREG_vertical_edges TO BINARY RESULT
 			scamp7_kernel_begin();
-				//THRESHOLD AREG_vertical_edges TO BINARY RESULT
 				sub(E,AREG_vertical_edges,F);
 				where(E);
-					MOV(DREG_vertical_edges,FLAG);//IN PES WHERE AREG_vertical_edges > edge_threshold, FLAG == 1
+					//IN PES WHERE AREG_vertical_edges > edge_threshold, FLAG == 1
+					MOV(DREG_vertical_edges,FLAG);
 				all();
+			scamp7_kernel_end();
 
-				//THRESHOLD AREG_horizontal_edges TO BINARY RESULT
+			//THRESHOLD AREG_horizontal_edges TO BINARY RESULT
+			scamp7_kernel_begin();
 				sub(E,AREG_horizontal_edges,F);
 				where(E);
-					MOV(DREG_horizontal_edges,FLAG);//IN PES WHERE AREG_horizontal_edges > edge_threshold, FLAG == 1
+					//IN PES WHERE AREG_horizontal_edges > edge_threshold, FLAG == 1
+					MOV(DREG_horizontal_edges,FLAG);
 				all();
 			scamp7_kernel_end();
 

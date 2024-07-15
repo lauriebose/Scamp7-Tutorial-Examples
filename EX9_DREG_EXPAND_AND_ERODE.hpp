@@ -32,22 +32,13 @@ int main()
 	    vs_gui_add_slider("erosion_steps",0,50,erosion_steps,&erosion_steps);
 
 	    int box1_x, box1_y, box1_width, box1_height;
-	    vs_gui_add_slider("box1 x: ", 0, 255, 196, &box1_x);
-	    vs_gui_add_slider("box1 y: ", 0, 255, 146, &box1_y);
-	    vs_gui_add_slider("box1 width: ", 0, 128, 13, &box1_width);
-	    vs_gui_add_slider("box1 height: ", 0, 128, 129, &box1_height);
+	    vs_gui_add_slider("box1 x: ", 0, 255, 82, &box1_x);
+	    vs_gui_add_slider("box1 y: ", 0, 255, 96, &box1_y);
+	    vs_gui_add_slider("box1 width: ", 0, 128, 37, &box1_width);
+	    vs_gui_add_slider("box1 height: ", 0, 128, 37, &box1_height);
 
-	    int box2_x, box2_y, box2_width, box2_height;
-	    vs_gui_add_slider("box2 x: ", 0, 255, 82, &box2_x);
-	    vs_gui_add_slider("box2 y: ", 0, 255, 96, &box2_y);
-	    vs_gui_add_slider("box2 width: ", 0, 128, 37, &box2_width);
-	    vs_gui_add_slider("box2 height: ", 0, 128, 37, &box2_height);
-
-	    //Setup switches for setting/clearing the content of the RN,RS,RE,RW DREG, which control the behaviour of DNEWS
-		int horizontal_DNEWS = 1;
-		vs_gui_add_switch("horizontal_DNEWS",horizontal_DNEWS == 1,&horizontal_DNEWS);
-		int vertical_DNEWS = 1;
-		vs_gui_add_switch("vertical_DNEWS",vertical_DNEWS == 1,&vertical_DNEWS);
+		int use_stepwise = 1;
+		vs_gui_add_switch("1 dir per step",use_stepwise == 1,&use_stepwise);
 
 
     //CONTINOUS FRAME LOOP
@@ -62,11 +53,12 @@ int main()
         //GENERATE SOME CONTENT IN DREG S0 TO DEMONSTRATE EROSION / EXPANSION UPON
 
 			DREG_load_centered_rect(S6,box1_x,box1_y,box1_width,box1_height);
-			DREG_load_centered_rect(S5,box2_x,box2_y,box2_width,box2_height);
+			DREG_load_centered_rect(S5,196,146,13,129);
+			scamp7_load_point(S4,200,60);
   			scamp7_kernel_begin();
   				MOV(S0,S6);
   				OR(S0,S5);
-
+  				OR(S0,S4);
   				MOV(S2,S0);//make a copy of S0
   			scamp7_kernel_end();
 
@@ -76,36 +68,76 @@ int main()
 
   			errode_expand_timer.reset();
 
-			//Setup DREG controlling DNEWS behaviour
-  			{
-				scamp7_kernel_begin();
-					CLR(RN,RS,RE,RW);//sets each DREG to 0 in all PEs
-				scamp7_kernel_end();
 
-				if(horizontal_DNEWS)
-				{
-					scamp7_kernel_begin();
-						SET(RE,RW);
-					scamp7_kernel_end();
-				}
-
-				if(vertical_DNEWS)
-				{
-					scamp7_kernel_begin();
-						SET(RN,RS);
-					scamp7_kernel_end();
-				}
-  			}
 
   			//Perform expansion steps
   			{
-				for(int n = 0 ; n < expansion_steps ; n++)
-				{
-					scamp7_kernel_begin();
-						DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
-						OR(S0,S6);//Combine expanded locations with S0 itself
+//  				if(expansion_steps > 0)
+//  				{
+//  					scamp7_kernel_begin();
+//						DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
+//						OR(S0,S6);//Combine expanded locations with S0 itself
+//					scamp7_kernel_end();
+//  				}
+
+  				if(use_stepwise)
+  				{
+  					scamp7_kernel_begin();
+						SET(RN,RS,RE,RW);
 					scamp7_kernel_end();
-				}
+					for(int n = 0 ; n < expansion_steps/4; n++)
+					{
+						scamp7_kernel_begin();
+							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
+							OR(S0,S6);//Combine expanded locations with S0 itself
+						scamp7_kernel_end();
+					}
+
+					int substeps = expansion_steps%4;
+					if(substeps > 0)
+					{
+						scamp7_kernel_begin();
+							CLR(RN,RS,RE,RW);
+							SET(RE);
+							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
+							OR(S0,S6);//Combine expanded locations with S0 itself
+						scamp7_kernel_end();
+						substeps--;
+					}
+					if(substeps > 0)
+					{
+						scamp7_kernel_begin();
+							CLR(RE);
+							SET(RN);
+							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
+							OR(S0,S6);//Combine expanded locations with S0 itself
+						scamp7_kernel_end();
+						substeps--;
+					}
+					if(substeps > 0)
+					{
+						scamp7_kernel_begin();
+							CLR(RN);
+							SET(RW);
+							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
+							OR(S0,S6);//Combine expanded locations with S0 itself
+						scamp7_kernel_end();
+						substeps--;
+					}
+  				}
+  				else
+  				{
+  					scamp7_kernel_begin();
+						SET(RN,RS,RE,RW);
+					scamp7_kernel_end();
+					for(int n = 0 ; n < expansion_steps; n++)
+					{
+						scamp7_kernel_begin();
+							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
+							OR(S0,S6);//Combine expanded locations with S0 itself
+						scamp7_kernel_end();
+					}
+  				}
   			}
 
   			//Perform erosion steps

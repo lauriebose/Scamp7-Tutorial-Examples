@@ -79,8 +79,8 @@ int main()
 
 					//perform DNEWS on S0 which stores the rows from which data is copied at each step
 					//move the row of 1s in the top half up, and that in the bottom half down
-					DNEWS0(S6,S0);
-					MOV(S0,S6);
+					DNEWS0(S5,S0);
+					MOV(S0,S5);
 				scamp7_kernel_end();
 			}
 

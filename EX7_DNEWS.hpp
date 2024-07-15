@@ -33,10 +33,10 @@ int main()
 		int disp_size = 2;
 		auto display_00 = vs_gui_add_display("S0",0,0,disp_size);
 		auto display_01 = vs_gui_add_display("S0 after DNEWS operations",0,disp_size,disp_size);
-		auto display_10 = vs_gui_add_display("RN",disp_size,0,1);
-		auto display_11 = vs_gui_add_display("RS",disp_size,1,1);
-		auto display_12 = vs_gui_add_display("RE",disp_size,2,1);
-		auto display_13 = vs_gui_add_display("RW",disp_size,3,1);
+		auto display_10 = vs_gui_add_display("RN - Take From North Neighbour",0,disp_size*2,1);
+		auto display_11 = vs_gui_add_display("RS - Take From South Neighbour",0,disp_size*2+1,1);
+		auto display_12 = vs_gui_add_display("RE - Take From East Neighbour",1,disp_size*2,1);
+		auto display_13 = vs_gui_add_display("RW - Take From West Neighbour",1,disp_size*2+1,1);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
@@ -56,7 +56,7 @@ int main()
 
 		//for toggling between using "DNEWS0" or "DNEWS1"
 		int use_DNEWS1 = 0;
-		vs_gui_add_switch("use_DNEWS1",1,&use_DNEWS1);
+		vs_gui_add_switch("use_DNEWS1",use_DNEWS1 == 1,&use_DNEWS1);
 
 
     //CONTINOUS FRAME LOOP
@@ -70,16 +70,20 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //GENERATE DATA IN DREG S0 TO DEMONSTRATE DNEWS OPERATION UPON
 
-			//generate 2 boxes and 1 point in various DREG
+			//generate 4 boxes and 1 point in various DREG
 			scamp7_load_point(S6,96,96);
-			DREG_load_centered_rect(S5,188,128,16,64);
-			DREG_load_centered_rect(S4,48,168,32,32);
+			DREG_load_centered_rect(S5,188,118,32,32);
+			DREG_load_centered_rect(S4,48,128,32,32);
+			DREG_load_centered_rect(S3,10,125,10,200);
+			DREG_load_centered_rect(S2,125,180,180,20);
 
 			//combine S6,S5,S4 contents together in S0
 			scamp7_kernel_begin();
 				MOV(S0,S6);
 				OR(S0,S5);
 				OR(S0,S4);
+				OR(S0,S3);
+				OR(S0,S2);
 			scamp7_kernel_end();
 
         	//make a copy of S0 in S1 to display for comparison display later
@@ -121,27 +125,16 @@ int main()
 				scamp7_kernel_end();
 			}
 
+
 			//Repeatedly perform DNEWS operations on S0 for the selected number of iterations
-  			if(!use_DNEWS1)
-  			{
-  				for(int n = 0 ; n < DNEWS_iterations ; n++)
-				{
-					scamp7_kernel_begin();
-						DNEWS0(S6,S0);//S6 = DNEWS(S0)
-						MOV(S0,S6);//Copy the results in S6 back into S0
-					scamp7_kernel_end();
-				}
-  			}
-  			else
-  			{
-  				for(int n = 0 ; n < DNEWS_iterations ; n++)
-				{
-					scamp7_kernel_begin();
-						DNEWS1(S6,S0);//S6 = DNEWS(S0)
-						MOV(S0,S6);//Copy the results in S6 back into S0
-					scamp7_kernel_end();
-				}
-  			}
+			for(int n = 0 ; n < DNEWS_iterations ; n++)
+			{
+				scamp7_kernel_begin();
+					DNEWS0(S6,S0);//S6 = DNEWS(S0)
+					MOV(S0,S6);//Copy the results in S6 back into S0
+				scamp7_kernel_end();
+			}
+
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT IMAGES

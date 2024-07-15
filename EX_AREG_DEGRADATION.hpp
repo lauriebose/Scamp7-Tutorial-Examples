@@ -34,8 +34,6 @@ int main()
     int disp_size = 2;
     auto display_00 = vs_gui_add_display("A",0,0,disp_size);
     auto display_01 = vs_gui_add_display("WHERE(S1) B = A ",0,disp_size,disp_size);
-    auto display_10 = vs_gui_add_display("S0",disp_size,0,disp_size);
-    auto display_11 = vs_gui_add_display("S1 = S1 OR S0",disp_size,disp_size,disp_size);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
@@ -46,13 +44,6 @@ int main()
     int AREG_copy_register = 0;
     vs_gui_add_slider("AREG_copy_register", 0, 4, AREG_copy_register, &AREG_copy_register);
 
-	auto gui_btn_clrs1 = vs_gui_add_button("CLR S1");
-	vs_on_gui_update(gui_btn_clrs1,[&](int32_t new_value)
-	{
-	    scamp7_kernel_begin();
-			CLR(S1);
-		scamp7_kernel_end();
-   });
 
     // Frame Loop
     while(1)

@@ -5,24 +5,7 @@ using namespace SCAMP7_PE;
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
 
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
-{
-
-	int top_left_row = centre_y-height/2;
-	if(top_left_row < 0)
-	{
-		height += top_left_row;
-		top_left_row = 0;
-	}
-	int top_left_column = centre_x-width/2;
-	if(top_left_column < 0)
-	{
-		width += top_left_column;
-		top_left_column = 0;
-	}
-
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
-}
+void DREG_load_centered_rect(dreg_t reg, int x, int y, int width, int height);
 
 int main()
 {
@@ -33,9 +16,8 @@ int main()
 
     int disp_size = 2;
     auto display_00 = vs_gui_add_display("A",0,0,disp_size);
-    auto display_01 = vs_gui_add_display("WHERE(S1) B = A ",0,disp_size,disp_size);
-    auto display_10 = vs_gui_add_display("S0",disp_size,0,disp_size);
-    auto display_11 = vs_gui_add_display("S1 = S1 OR S0",disp_size,disp_size,disp_size);
+    auto display_01 = vs_gui_add_display("S1",0,disp_size,disp_size);
+    auto display_02 = vs_gui_add_display("WHERE(S1) B = A ",0,disp_size*2,disp_size);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
@@ -45,14 +27,6 @@ int main()
     vs_gui_add_slider("box1 y: ", 0, 255, 64, &box1_y);
     vs_gui_add_slider("box1 width: ", 0, 128, 96, &box1_width);
     vs_gui_add_slider("box1 height: ", 0, 128, 64, &box1_height);
-
-	auto gui_btn_clrs1 = vs_gui_add_button("CLR S1");
-	vs_on_gui_update(gui_btn_clrs1,[&](int32_t new_value)
-	{
-	    scamp7_kernel_begin();
-			CLR(S1);
-		scamp7_kernel_end();
-   });
 
     // Frame Loop
     while(1)
@@ -70,37 +44,32 @@ int main()
 			scamp7_kernel_end();
 
     	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//load box shape into DREG S0 & perform OR between DREG S1 & S0
+		//load box shape into DREG S1
 
-			DREG_load_centered_rect(S0,box1_x,box1_y,box1_width,box1_height);
-			scamp7_kernel_begin();
-				OR(S1,S0);
-			scamp7_kernel_end();
+			DREG_load_centered_rect(S1,box1_x,box1_y,box1_width,box1_height);
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//Example of conditional execution of AREG instructions using FLAG register
 
-			scamp7_kernel_begin();
-				//copies S1 into FLAG, Identical to "MOV(FLAG,S1)"
-				WHERE(S0);
+scamp7_kernel_begin();
+	//copies S1 into FLAG, Identical to "MOV(FLAG,S1)"
+	WHERE(S1);
 
-					//AREG instructions are only performed in PEs where FLAG == 1
-					//Thus "mov(B,A)" will now copy the captured image A, into B, ONLY where S1 == 1
-					mov(B,A);
+		//AREG instructions are only performed in PEs where FLAG == 1
+		//Thus "mov(B,A)" will now copy A, into B, ONLY where S1 == 1
+		mov(B,A);
 
-				//sets FLAG = 1 in all PEs, Identical to "SET(FLAG)"
-				ALL();
-			scamp7_kernel_end();
+	//sets FLAG = 1 in all PEs, Identical to "SET(FLAG)"
+	ALL();
+scamp7_kernel_end();
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT RESULTS STORED IN VARIOUS REGISTERS
 
 	    	output_timer.reset();
 			output_areg_via_bitstack_DNEWS(A,display_00);
-			output_areg_via_bitstack_DNEWS(B,display_01);
-
-			scamp7_output_image(S0,display_10);
-			scamp7_output_image(S1,display_11);
+			scamp7_output_image(S1,display_01);
+			output_areg_via_bitstack_DNEWS(B,display_02);
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -113,3 +82,24 @@ int main()
     }
     return 0;
 }
+
+
+void DREG_load_centered_rect(dreg_t reg, int x, int y, int width, int height)
+{
+	int top_row = y-height/2;
+	if(top_row < 0)
+	{
+		height += top_row;
+		top_row = 0;
+	}
+	int right_column = x-width/2;
+	if(right_column < 0)
+	{
+		width += right_column;
+		right_column = 0;
+	}
+	int bottom_row = top_row+height;
+	int left_column = right_column+width;
+	scamp7_load_region(reg, top_row, right_column, bottom_row, left_column);
+}
+

@@ -1,6 +1,7 @@
 #include <scamp7.hpp>
 #include "MISC/OUTPUT_AREG_BITSTACK.hpp"
 using namespace SCAMP7_PE;
+#include "../../s5d_m0_scamp7/src/debug_gui.hpp"
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
@@ -11,14 +12,16 @@ int main()
     vs_init();
 
     int display_size = 2;
-    auto display_00 = vs_gui_add_display("Captured Image",0,0,display_size);
-    auto display_01 = vs_gui_add_display("Shifted Image",0,display_size,display_size);
-    auto display_11 = vs_gui_add_display("Captured Image - Shifted Image",display_size,display_size,display_size);
+    auto display_00 = vs_gui_add_display("Captured Image, AREG A",0,0,display_size);
+    auto display_01 = vs_gui_add_display("Shifted Imag, AREG B",0,display_size,display_size);
+    auto display_02 = vs_gui_add_display("Captured Image - Shifted Image, AREG C = A - B",0,2*display_size,display_size);
 
     int shift_x = 40;
     vs_gui_add_slider("shift x",-128,128,shift_x,&shift_x);
     int shift_y = 10;
     vs_gui_add_slider("shift y",-128,128,shift_y,&shift_y);
+
+	setup_voltage_configurator(false);
 
     // Frame Loop
     while(1)
@@ -45,7 +48,7 @@ int main()
 			{
 				for(int x = 0; x < shift_x; x++)
 				{
-					//KERNEL SHIFTS B ONE "PIXE"L RIGHT
+					//KERNEL SHIFTS B ONE "PIXEL" RIGHT
 					scamp7_kernel_begin();
 						bus(NEWS,B);//NEWS = -B
 						bus(B,XW);//B = -NEWS OF WEST NEIGHBOR
@@ -65,7 +68,7 @@ int main()
 			}
 
 			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-			//NOW SHIFT AREG HORIZONTALLY
+			//NOW SHIFT AREG VERTICALLY
 			if(shift_y > 0)
 			{
 				for(int y = 0; y < shift_y; y++)
@@ -103,7 +106,7 @@ int main()
         	output_timer.reset();
 			output_areg_via_bitstack_DNEWS(A,display_00);//captured image
 			output_areg_via_bitstack_DNEWS(B,display_01);//shifted image
-			output_areg_via_bitstack_DNEWS(C,display_11);//captured image - shifted image
+			output_areg_via_bitstack_DNEWS(C,display_02);//captured image - shifted image
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
