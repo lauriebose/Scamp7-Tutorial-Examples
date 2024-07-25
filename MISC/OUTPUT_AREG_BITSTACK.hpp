@@ -8,7 +8,7 @@ using namespace SCAMP7_PE;
 	const int preset_in_val3 = 38;
 	const int preset_in_val4 = 20;
 
-	void output_areg_F_via_bitstack_DNEWS(areg_t reg,vs_handle display,bool use_div = false, int in_val1 = preset_in_val1, int in_val2 = preset_in_val2, int in_val3 = preset_in_val3, int in_val4 = preset_in_val4)
+	void output_4bit_F_via_DNEWS(areg_t reg,vs_handle display,bool use_div = false, int in_val1 = preset_in_val1, int in_val2 = preset_in_val2, int in_val3 = preset_in_val3, int in_val4 = preset_in_val4)
 	{
 		if(use_div)
 		{
@@ -112,11 +112,11 @@ using namespace SCAMP7_PE;
 		}
 	}
 
-	void output_areg_via_bitstack_DNEWS(areg_t reg,vs_handle display,bool use_div = false, int in_val1 = 127, int in_val2 = 77, int in_val3 = 40, int in_val4 = 21)
+	void output_4bit_image_via_DNEWS(areg_t reg,vs_handle display,bool use_div = false, int in_val1 = 127, int in_val2 = 77, int in_val3 = 40, int in_val4 = 21)
 	{
 		scamp7_dynamic_kernel_begin();
 			mov(F,reg);
 		scamp7_dynamic_kernel_end();
-		output_areg_F_via_bitstack_DNEWS(reg,display,use_div,in_val1,in_val2,in_val3,in_val4);
+		output_4bit_F_via_DNEWS(reg,display,use_div,in_val1,in_val2,in_val3,in_val4);
 	}
 #endif
