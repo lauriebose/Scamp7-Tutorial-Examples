@@ -5,6 +5,7 @@
 #define EX_AREG_DEGRADATION -5
 #define EX_DREG_LOAD_PATTERN -6
 #define EX_RF_AND_RM -7
+#define EX_GLOBAL_OR -8
 
 #define EX0_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -19,16 +20,16 @@
 #define EX10_HALF_SCALING 10
 #define EX_DREG_FLOODING 11
 
-#define selected_algo -7
+#define selected_algo -8
 
 
 #if selected_algo == 999
 #elif selected_algo == EX0_IMAGE_CAPTURE
 	#include "EX0_IMAGE_CAPTURE.hpp"
 #elif selected_algo == EX_IMAGE_CAPTURE_AND_AREG
-	#include "EX1_IMAGE_CAPTURE_AND_AREG.hpp"
+	#include "EX01_IMAGE_CAPTURE_AND_AREG.hpp"
 #elif selected_algo == EX_DREG_BASICS
-	#include "EX2_DREG_BASICS.hpp"
+	#include "EX02_DREG_BASICS.hpp"
 #elif selected_algo == EX_FLAG
 	#include "EX3_FLAG.hpp"
 #elif selected_algo == EX_IMAGE_THRESHOLDING
@@ -64,5 +65,7 @@
 	#include "EX_DREG_LOAD_PATTERN.hpp"
 #elif selected_algo == EX_RF_AND_RM
 	#include "EX_RF_AND_RM.hpp"
+#elif selected_algo == EX_GLOBAL_OR
+	#include "EX_GLOBAL_OR.hpp"
 #endif
 
