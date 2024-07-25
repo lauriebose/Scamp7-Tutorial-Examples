@@ -45,9 +45,11 @@ int main()
 			//B - stores the previous frame's pixels
 			//C - stores the difference between frames A-B
 			scamp7_kernel_begin();
-				//Each PE contains a PIX register which accumulates light entering the PE
-				//"get_image" copies this accumulated signal into a AREG, and resets the accumulation within PIX
-				//This effectively captures a image frame, with each PE storing 1 pixel of the image
+			    //Each PE contains a PIX register which accumulates light entering the PE
+			    //"get_image" copies this accumulated signal into an AREG
+			    //This “captures” an image frame, with each PE storing 1 pixel of the image
+		        //The accumulation within PIX is also reset
+
 
 				//A = pixel data of latest frame, F = intermediate result
 				get_image(A,F);
@@ -71,26 +73,26 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //OUTPUT IMAGES
 
-			output_timer.reset();
-			if(image_output)
-			{
-				//display the contents of PE registers as images, displaying 3 images for A,B,C
-				if(use_4bit_image_output)
-				{
-					//output AREG quickly using 4bit approximation
-					output_areg_via_bitstack_DNEWS(A,display_00);
-					output_areg_via_bitstack_DNEWS(B,display_01);
-					output_areg_via_bitstack_DNEWS(C,display_02);
-				}
-				else
-				{
-					//output AREG slowly at higher accuracy
-					scamp7_output_image(A,display_00);
-					scamp7_output_image(B,display_01);
-					scamp7_output_image(C,display_02);
-				}
-			}
-			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
+output_timer.reset();
+if(image_output)
+{
+	//display the contents of PE registers as images, displaying 3 images for A,B,C
+	if(use_4bit_image_output)
+	{
+		//output AREG quickly using 4bit approximation
+		output_4bit_image_via_DNEWS(A,display_00);
+		output_4bit_image_via_DNEWS(B,display_01);
+		output_4bit_image_via_DNEWS(C,display_02);
+	}
+	else
+	{
+		//output AREG slowly at higher accuracy
+		scamp7_output_image(A,display_00);
+		scamp7_output_image(B,display_01);
+		scamp7_output_image(C,display_02);
+	}
+}
+int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT TEXT INFO

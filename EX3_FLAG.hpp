@@ -67,9 +67,9 @@ scamp7_kernel_end();
 		//OUTPUT RESULTS STORED IN VARIOUS REGISTERS
 
 	    	output_timer.reset();
-			output_areg_via_bitstack_DNEWS(A,display_00);
+	    	output_4bit_image_via_DNEWS(A,display_00);
 			scamp7_output_image(S1,display_01);
-			output_areg_via_bitstack_DNEWS(B,display_02);
+			output_4bit_image_via_DNEWS(B,display_02);
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

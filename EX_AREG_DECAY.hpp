@@ -62,11 +62,11 @@ int main()
 			output_timer.reset();
 
 			//display current captured frame and thresholded image
-			output_areg_via_bitstack_DNEWS(A,display_00);
+			output_4bit_image_via_DNEWS(A,display_00);
 			scamp7_output_image(S0,display_01);
 
 			//display stored AREG / DREG images
-			output_areg_via_bitstack_DNEWS(B,display_10);
+			output_4bit_image_via_DNEWS(B,display_10);
 			scamp7_output_image(S1,display_11);
 
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output

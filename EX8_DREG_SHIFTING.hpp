@@ -164,7 +164,7 @@ int main()
 			output_timer.reset();
 			if(!output_just_shifted_img)
 			{
-				output_areg_via_bitstack_DNEWS(A,display_00);//output AREG quickly using 4bit approximation
+				output_4bit_image_via_DNEWS(A,display_00);//output AREG quickly using 4bit approximation
 				scamp7_output_image(S0,display_01);//display thresholded image
 			}
 			scamp7_output_image(S1,display_02);//displayed shifted thresholded image

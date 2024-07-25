@@ -115,9 +115,9 @@ int main()
 
 			if(!output_only_combined_edges)
 			{
-				output_areg_via_bitstack_DNEWS(AREG_image,display_00);
-				output_areg_via_bitstack_DNEWS(AREG_vertical_edges,display_01);
-				output_areg_via_bitstack_DNEWS(AREG_horizontal_edges,display_02);
+				output_4bit_image_via_DNEWS(AREG_image,display_00);
+				output_4bit_image_via_DNEWS(AREG_vertical_edges,display_01);
+				output_4bit_image_via_DNEWS(AREG_horizontal_edges,display_02);
 				scamp7_output_image(DREG_vertical_edges,display_11);
 				scamp7_output_image(DREG_horizontal_edges,display_12);
 			}

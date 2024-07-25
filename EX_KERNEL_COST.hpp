@@ -7,24 +7,7 @@ vs_stopwatch output_timer;
 vs_stopwatch errode_expand_timer;
 
 
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
-{
-	int top_left_row = centre_y-height/2;
-	if(top_left_row < 0)
-	{
-		height += top_left_row;
-		top_left_row = 0;
-	}
-	int top_left_column = centre_x-width/2;
-	if(top_left_column < 0)
-	{
-		width += top_left_column;
-		top_left_column = 0;
-	}
-
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
-}
-
+void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height);
 
 int main()
 {
@@ -34,18 +17,14 @@ int main()
     //SETUP IMAGE DISPLAYS
 
 		int disp_size = 2;
-		auto display_00 = vs_gui_add_display("Captured Image",0,0,disp_size);
-		auto display_01 = vs_gui_add_display("Binary Thresholded Image",0,disp_size,disp_size);
-		auto display_02 = vs_gui_add_display("Shifted Binary Thresholded Image",0,disp_size*2,disp_size);
+		auto display_00 = vs_gui_add_display("S0",0,0,disp_size);
+		auto display_01 = vs_gui_add_display("Shifted S0",0,disp_size,disp_size);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
 
 	    int kernel_selection = 0;
 	    vs_gui_add_slider("kernel_selection",0,8,kernel_selection,&kernel_selection);
-
-	    int kernel_calls = 0;
-	    vs_gui_add_slider("kernel_calls",0,1000,kernel_calls,&kernel_calls);
 
     //CONTINOUS FRAME LOOP
     while(true)
@@ -55,13 +34,29 @@ int main()
     	vs_disable_frame_trigger();
         vs_frame_loop_control();
 
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //CAPTURE FRAME AND PERFORM THRESHOLDING
 
-        DREG_load_centered_rect(S0,128,128,32,96);
-    	scamp7_kernel_begin();
-			MOV(S1,S0);
-		scamp7_kernel_end();
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        //GENERATE DATA IN DREG S0 TO DEMONSTRATE DNEWS OPERATION UPON
+
+			//generate 4 boxes and 1 point in various DREG
+			scamp7_load_point(S6,96,96);
+			DREG_load_centered_rect(S5,188,118,32,32);
+			DREG_load_centered_rect(S4,48,128,32,32);
+			DREG_load_centered_rect(S3,10,125,10,200);
+			DREG_load_centered_rect(S2,125,180,180,20);
+
+			//combine S6,S5,S4 contents together in S0
+			scamp7_kernel_begin();
+				MOV(S0,S6);
+				OR(S0,S5);
+				OR(S0,S4);
+				OR(S0,S3);
+				OR(S0,S2);
+			scamp7_kernel_end();
+
+			scamp7_kernel_begin();
+				MOV(S1,S0);
+			scamp7_kernel_end();
 
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,29 +66,8 @@ int main()
 
 			scamp7_kernel_begin();
 				CLR(RN,RS,RE,RW);//Clear all DREG controlling DNEWS behaviour
-				SET(RE);
+				SET(RW);
 			scamp7_kernel_end();
-
-
-//			vs_post_text("perform 100 kernels of length 2\n");
-//			shift_timer.reset();
-//			for(int n = 0 ; n < 500 ; n++)
-//			{
-//				scamp7_kernel_begin();
-//					MOV(S1,S6);
-//				scamp7_kernel_end();
-//			}
-//			vs_post_text("time for 100 kernel of 1 instruction %d microseconds \n", shift_timer.get_usec());
-//
-//			vs_post_text("perform 100 kernels of length 2\n");
-//			shift_timer.reset();
-//			scamp7_kernel_begin();
-//			for(int n = 0 ; n < 500 ; n++)
-//			{
-//				MOV(S1,S6);
-//			}
-//			scamp7_kernel_end();
-//			vs_post_text("time for 1 kernel of 100 instruction %d microseconds \n", shift_timer.get_usec());
 
 			if(kernel_selection == 0)
 			{
@@ -263,8 +237,8 @@ int main()
 		//OUTPUT IMAGES
 
 			output_timer.reset();
-			scamp7_output_image(S0,display_01);//display thresholded image
-			scamp7_output_image(S1,display_02);//displayed shifted thresholded image
+			scamp7_output_image(S0,display_00);//display thresholded image
+			scamp7_output_image(S1,display_01);//displayed shifted thresholded image
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -278,4 +252,24 @@ int main()
     }
     return 0;
 }
+
+
+void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
+{
+	int top_left_row = centre_y-height/2;
+	if(top_left_row < 0)
+	{
+		height += top_left_row;
+		top_left_row = 0;
+	}
+	int top_left_column = centre_x-width/2;
+	if(top_left_column < 0)
+	{
+		width += top_left_column;
+		top_left_column = 0;
+	}
+
+	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
+}
+
 

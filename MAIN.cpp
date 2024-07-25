@@ -4,6 +4,7 @@
 #define EX_EVENT_READOUT -4
 #define EX_AREG_DEGRADATION -5
 
+#define EX0_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
 #define	EX_DREG_BASICS 2
 #define EX_FLAG 3
@@ -16,10 +17,12 @@
 #define EX10_HALF_SCALING 10
 #define EX_DREG_FLOODING 11
 
-#define selected_algo -3
+#define selected_algo -5
 
 
 #if selected_algo == 999
+#elif selected_algo == EX0_IMAGE_CAPTURE
+	#include "EX0_IMAGE_CAPTURE.hpp"
 #elif selected_algo == EX_IMAGE_CAPTURE_AND_AREG
 	#include "EX1_IMAGE_CAPTURE_AND_AREG.hpp"
 #elif selected_algo == EX_DREG_BASICS

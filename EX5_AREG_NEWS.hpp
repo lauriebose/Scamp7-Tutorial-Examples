@@ -104,9 +104,9 @@ int main()
 		//OUTPUT REGISTERS AS IMAGES
 
         	output_timer.reset();
-			output_areg_via_bitstack_DNEWS(A,display_00);//captured image
-			output_areg_via_bitstack_DNEWS(B,display_01);//shifted image
-			output_areg_via_bitstack_DNEWS(C,display_02);//captured image - shifted image
+        	output_4bit_image_via_DNEWS(A,display_00);//captured image
+        	output_4bit_image_via_DNEWS(B,display_01);//shifted image
+        	output_4bit_image_via_DNEWS(C,display_02);//captured image - shifted image
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

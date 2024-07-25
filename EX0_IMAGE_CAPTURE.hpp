@@ -26,35 +26,31 @@ int main()
     {
         frame_timer.reset();//reset frame_timer
 
-    	vs_disable_frame_trigger();
+
         vs_frame_loop_control();
+        vs_disable_frame_trigger();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //CAPTURE FRAME AND PERFORM AREG OPERATIONS
 
 			scamp7_kernel_begin();
-				//Each PE contains a PIX register which accumulates light entering the PE
-				//"get_image" copies this accumulated signal into a AREG, and resets the accumulation within PIX
-				//This effectively captures a image frame, with each PE storing 1 pixel of the image
-
 				//A = pixel data of latest frame, F = intermediate result
 				get_image(A,F);
 			scamp7_kernel_end();
 
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //OUTPUT IMAGES
-
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//OUTPUT IMAGES
 			if(image_output)
 			{
-				//display the contents of PE registers as images, displaying 3 images for A,B,C
+				//output register plane as image
 				if(use_4bit_image_output)
 				{
 					//output AREG quickly using 4bit approximation
-					output_areg_via_bitstack_DNEWS(A,display_00);
+					output_4bit_image_via_DNEWS(A,display_00);
 				}
 				else
 				{
-					//output AREG slowly at higher accuracy
+					//output AREG at higher accuracy but taking significantly longer
 					scamp7_output_image(A,display_00);
 				}
 			}
@@ -63,8 +59,13 @@ int main()
 		//OUTPUT TEXT INFO
 
 			int frame_time_microseconds = frame_timer.get_usec(); //get the time taken this frame
-			int max_possible_frame_rate = 1000000/frame_time_microseconds; //calculate the possible max FPS
-			vs_post_text("frame time %d microseconds, potential FPS ~%d \n",frame_time_microseconds,max_possible_frame_rate); //display this values on host
+
+			vs_post_text("!clear");
+			//calculate the possible max FPS
+			int max_possible_frame_rate = 1000000/frame_time_microseconds;
+			//display this values on host
+			vs_post_text("frame time %d microseconds, potential FPS ~%d \n",frame_time_microseconds,max_possible_frame_rate);
+
     }
     return 0;
 }

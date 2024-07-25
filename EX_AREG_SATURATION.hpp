@@ -3,7 +3,6 @@
 using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
-vs_stopwatch output_timer;
 
 int main()
 {
@@ -55,32 +54,32 @@ int main()
 			scamp7_kernel_begin();
 				add(A,A,C);//Step 1. A = A + input
 			scamp7_kernel_end();
-			output_areg_via_bitstack_DNEWS(A,display_01);
+			output_4bit_image_via_DNEWS(A,display_01);
 
 			scamp7_kernel_begin();
 				add(A,A,C);//Step 2. A = A + input
 			scamp7_kernel_end();
-			output_areg_via_bitstack_DNEWS(A,display_02);
+			output_4bit_image_via_DNEWS(A,display_02);
 
 			scamp7_kernel_begin();
 				add(A,A,C);//Step 3. A = A + input
 			scamp7_kernel_end();
-			output_areg_via_bitstack_DNEWS(A,display_03);
+			output_4bit_image_via_DNEWS(A,display_03);
 
 			scamp7_kernel_begin();
 				sub(A,A,C);//Step 4. A = A - input
 			scamp7_kernel_end();
-			output_areg_via_bitstack_DNEWS(A,display_13);
+			output_4bit_image_via_DNEWS(A,display_13);
 
 			scamp7_kernel_begin();
 				sub(A,A,C);//Step 5. A = A - input
 			scamp7_kernel_end();
-			output_areg_via_bitstack_DNEWS(A,display_12);
+			output_4bit_image_via_DNEWS(A,display_12);
 
 			scamp7_kernel_begin();
 				sub(A,A,C);//Step 6. A = A - input
 			scamp7_kernel_end();
-			output_areg_via_bitstack_DNEWS(A,display_11);
+			output_4bit_image_via_DNEWS(A,display_11);
 
 			//after performing these additions and subtractions to AREG A its content should end up back where it started
 			//however this is not necessarily true as the range of stored values in AREG is limited
@@ -89,12 +88,10 @@ int main()
 				sub(A,A,B);
 				abs(C,A);//C == the absolute difference between A and the original image in B, i.e. the error due to AREG saturation
 			scamp7_kernel_end();
-			output_areg_via_bitstack_DNEWS(C,display_10);
-			output_timer.reset();
+			output_4bit_image_via_DNEWS(C,display_10);
 
 			//display current captured frame and thresholded image
-			output_areg_via_bitstack_DNEWS(B,display_00);
-
+			output_4bit_image_via_DNEWS(B,display_00);
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT TEXT INFO

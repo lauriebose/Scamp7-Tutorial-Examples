@@ -61,8 +61,8 @@ int main()
 			if(output_image)
 			{
 				//output AREG quickly using 4bit approximation
-				output_areg_via_bitstack_DNEWS(A,display_00);
-				output_areg_via_bitstack_DNEWS(C,display_01);
+				output_4bit_image_via_DNEWS(A,display_00);
+				output_4bit_image_via_DNEWS(C,display_01);
 			}
 			scamp7_output_image(S0,display_02);//display thresholded image
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output

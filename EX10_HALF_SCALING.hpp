@@ -93,11 +93,11 @@ int main()
         	scamp7_output_image(RN,display_01);
 			scamp7_output_image(RS,display_02);
 
-			output_areg_via_bitstack_DNEWS(A,display_00);//captured image
+			output_4bit_image_via_DNEWS(A,display_00);//captured image
 
-			output_areg_via_bitstack_DNEWS(B,display_10);//shifted image data
+			output_4bit_image_via_DNEWS(B,display_10);//shifted image data
 			scamp7_output_image(S0,display_11);//rows from which to copy AREG data for current scaling step
-			output_areg_via_bitstack_DNEWS(C,display_12);//scaled image data
+			output_4bit_image_via_DNEWS(C,display_12);//scaled image data
 
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 

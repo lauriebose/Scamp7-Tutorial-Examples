@@ -2,6 +2,9 @@
 #include "MISC/OUTPUT_AREG_BITSTACK.hpp"
 using namespace SCAMP7_PE;
 
+#include <iostream>
+#include <string>
+
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
 vs_stopwatch event_readout_timer;
@@ -16,16 +19,16 @@ int main()
     //SETUP IMAGE DISPLAYS
 
 		int display_size = 2;
-		auto display_00 = vs_gui_add_display("00",0,0,display_size);
-		auto display_01 = vs_gui_add_display("Scanned Events",0,display_size,display_size);
-		auto display_00_red_overlay = vs_gui_add_display("",0,0,display_size,"overlay_red");
+		auto display_00 = vs_gui_add_display("S5",0,0,display_size);
+		auto display_01 = vs_gui_add_display("Scanned Events From S5",0,display_size,display_size);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
 
-	    int event_to_scan = 15;
-	    vs_gui_add_slider("event_to_scan: ",0,100,event_to_scan,&event_to_scan);
-	    uint8_t event_data [200];
+		const int max_events_to_scan = 10;
+	    int event_to_scan = 3;
+	    vs_gui_add_slider("event_to_scan: ",0,max_events_to_scan,event_to_scan,&event_to_scan);
+	    uint8_t event_data [max_events_to_scan*2];
 
 	    int point_x = 120;
 	    int point_y = 40;
@@ -37,18 +40,13 @@ int main()
 	    vs_gui_add_slider("point_x2: ",0,255,point_x2,&point_x2);
 	    vs_gui_add_slider("point_y2: ",0,255,point_y2,&point_y2);
 
-	    int box_x, box_y, box_width, box_height;
-	    vs_gui_add_slider("box x: ", 0, 255, 128, &box_x);
-	    vs_gui_add_slider("box y: ", 0, 255, 220, &box_y);
-	    vs_gui_add_slider("box width: ", 0, 32, 16, &box_width);
-	    vs_gui_add_slider("box height: ", 0, 32, 16, &box_height);
-
-	    int draw_event_ids = 0;
+	    int draw_event_ids = 1;
 	    vs_gui_add_switch("draw event ids",draw_event_ids == 1,&draw_event_ids);
 
     //CONTINOUS FRAME LOOP
     while(true)
     {
+
         frame_timer.reset();//reset frame_timer
 
     	vs_disable_frame_trigger();
@@ -61,11 +59,9 @@ int main()
         scamp7_load_pattern(S5,70,70,128,128);
         scamp7_load_point(RN,point_y,point_x);
         scamp7_load_point(RS,point_y2,point_x2);
-        DREG_load_centered_rect(RW,box_x,box_y,box_width,box_height);
         scamp7_kernel_begin();
 			OR(S5,RN);
 			OR(S5,RS);
-			OR(S5,RW);
 		scamp7_kernel_end();
 
 		event_readout_timer.reset();
@@ -78,6 +74,8 @@ int main()
 		 scamp7_kernel_begin();
 			CLR(S4);
 		scamp7_kernel_end();
+
+		std::string event_data_string;
 		for(int n = 0 ; n < event_to_scan ; n++)
 		{
 			int event_x = event_data[n*2];
@@ -95,24 +93,23 @@ int main()
 			scamp7_kernel_end();
 
 			//PRINT EVENT XYs
-			vs_post_text("%d,%d, ",event_x,event_y);
+			event_data_string += "(" + std::to_string(event_x) + "," + std::to_string(event_y) + "), ";
 
 			//DRAW INDEX OF SCANNED EVENTS ON DISPLAY
 			if(draw_event_ids)
 			{
 				std::string str = std::to_string(n);
-				vs_gui_display_text(display_00,event_x,event_y,str.c_str());
+				vs_gui_display_text(display_01,event_x,event_y,str.c_str());
 			}
 
 		}
-		vs_post_text("\n");
+		vs_post_text("%s\n",event_data_string.c_str());
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //OUTPUT IMAGES
 
 			output_timer.reset();
 		    scamp7_output_image(S5,display_00);
-	        scamp7_output_image(S4,display_00_red_overlay);
 	        scamp7_output_image(S4,display_01);
 	    	int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
@@ -142,5 +139,5 @@ void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, i
 		top_left_column = 0;
 	}
 
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
+	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height-1, top_left_column+width-1);
 }
