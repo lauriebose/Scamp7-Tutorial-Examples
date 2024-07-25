@@ -5,7 +5,7 @@ using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch errode_expand_timer;
+vs_stopwatch areg_shift_timer;
 
 int main()
 {
@@ -42,7 +42,7 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //SHIFT AREG HORIZONTALLY
 
-			errode_expand_timer.reset();
+			areg_shift_timer.reset();
 
 			if(shift_x > 0)
 			{
@@ -92,7 +92,7 @@ int main()
 				}
 			}
 
-			int time_spent_on_shifting = errode_expand_timer.get_usec();
+			int time_spent_on_shifting = areg_shift_timer.get_usec();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //SUBTRACT SHIFTED IMAGE FROM ORIGINAL
@@ -123,216 +123,3 @@ int main()
     return 0;
 }
 
-void shift_F(int shiftx, int shifty)
-{
-	if(shiftx > 0)
-	{
-		while(shiftx > 0)
-		{
-			if(shiftx % 8 == 0)
-			{
-				scamp7_kernel_begin();
-					bus(XE,F);
-					bus(F,XW);
-					bus(XE,F);
-					bus(F,XW);
-					bus(XE,F);
-					bus(F,XW);
-					bus(XE,F);
-					bus(F,XW);
-				scamp7_kernel_end();
-				shiftx-=8;
-			}
-			else
-			{
-				if(shiftx % 4 == 0)
-				{
-					scamp7_kernel_begin();
-						bus(XE,F);
-						bus(F,XW);
-						bus(XE,F);
-						bus(F,XW);
-					scamp7_kernel_end();
-					shiftx-=4;
-				}
-				else
-				{
-					if(shiftx % 2 == 0)
-					{
-						scamp7_kernel_begin();
-							bus(XE,F);
-							bus(F,XW);
-						scamp7_kernel_end();
-						shiftx-=2;
-					}
-					else
-					{
-						scamp7_kernel_begin();
-							bus(NEWS,F);
-							bus(F,XW);
-						scamp7_kernel_end();
-						shiftx--;
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		while(shiftx < 0)
-		{
-
-			if(shiftx % 8 == 0)
-			{
-				scamp7_kernel_begin();
-					bus(XW,F);
-					bus(F,XE);
-					bus(XW,F);
-					bus(F,XE);
-					bus(XW,F);
-					bus(F,XE);
-					bus(XW,F);
-					bus(F,XE);
-				scamp7_kernel_end();
-				shiftx+=8;
-			}
-			else
-			{
-				if(shiftx % 4 == 0)
-				{
-					scamp7_kernel_begin();
-						bus(XW,F);
-						bus(F,XE);
-						bus(XW,F);
-						bus(F,XE);
-					scamp7_kernel_end();
-					shiftx+=4;
-				}
-				else
-				{
-					if(shiftx % 2 == 0)
-					{
-						scamp7_kernel_begin();
-							bus(XW,F);
-							bus(F,XE);
-						scamp7_kernel_end();
-						shiftx+=2;
-					}
-					else
-					{
-						scamp7_kernel_begin();
-							bus(NEWS,F);
-							bus(F,XE);
-						scamp7_kernel_end();
-						shiftx++;
-					}
-				}
-			}
-		}
-	}
-
-	if(shifty > 0)
-	{
-		while(shifty > 0)
-		{
-			if(shifty % 8 == 0)
-			{
-				scamp7_kernel_begin();
-					bus(XN,F);
-					bus(F,XS);
-					bus(XN,F);
-					bus(F,XS);
-					bus(XN,F);
-					bus(F,XS);
-					bus(XN,F);
-					bus(F,XS);
-				scamp7_kernel_end();
-				shifty-=8;
-			}
-			else
-			{
-				if(shifty % 4 == 0)
-				{
-					scamp7_kernel_begin();
-					bus(XN,F);
-					bus(F,XS);
-					bus(XN,F);
-					bus(F,XS);
-					scamp7_kernel_end();
-					shifty-=4;
-				}
-				else
-				{
-					if(shifty % 2 == 0)
-					{
-						scamp7_kernel_begin();
-						bus(XN,F);
-						bus(F,XS);
-						scamp7_kernel_end();
-						shifty-=2;
-					}
-					else
-					{
-						scamp7_kernel_begin();
-							bus(NEWS,F);
-							bus(F,XS);
-						scamp7_kernel_end();
-						shifty--;
-					}
-				}
-			}
-		}
-	}
-	else
-	{
-		while(shifty < 0)
-		{
-			if(shifty % 8 == 0)
-			{
-				scamp7_kernel_begin();
-					bus(XS,F);
-					bus(F,XN);
-					bus(XS,F);
-					bus(F,XN);
-					bus(XS,F);
-					bus(F,XN);
-					bus(XS,F);
-					bus(F,XN);
-				scamp7_kernel_end();
-				shifty+=8;
-			}
-			else
-			{
-				if(shifty % 4 == 0)
-				{
-					scamp7_kernel_begin();
-					bus(XS,F);
-					bus(F,XN);
-					bus(XS,F);
-					bus(F,XN);
-					scamp7_kernel_end();
-					shifty+=4;
-				}
-				else
-				{
-					if(shifty % 2 == 0)
-					{
-						scamp7_kernel_begin();
-						bus(XS,F);
-						bus(F,XN);
-						scamp7_kernel_end();
-						shifty+=2;
-					}
-					else
-					{
-						scamp7_kernel_begin();
-							bus(NEWS,F);
-							bus(F,XN);
-						scamp7_kernel_end();
-						shifty++;
-					}
-				}
-			}
-		}
-	}
-}
