@@ -3,6 +3,8 @@
 #define EX_AREG_SATURATION -3
 #define EX_EVENT_READOUT -4
 #define EX_AREG_DEGRADATION -5
+#define EX_DREG_LOAD_PATTERN -6
+#define EX_RF_AND_RM -7
 
 #define EX0_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -17,7 +19,7 @@
 #define EX10_HALF_SCALING 10
 #define EX_DREG_FLOODING 11
 
-#define selected_algo -5
+#define selected_algo -7
 
 
 #if selected_algo == 999
@@ -58,6 +60,9 @@
 	#include "EX_AREG_SATURATION.hpp"
 #elif selected_algo == EX_AREG_DEGRADATION
 	#include "EX_AREG_DEGRADATION.hpp"
-
+#elif selected_algo == EX_DREG_LOAD_PATTERN
+	#include "EX_DREG_LOAD_PATTERN.hpp"
+#elif selected_algo == EX_RF_AND_RM
+	#include "EX_RF_AND_RM.hpp"
 #endif
 
