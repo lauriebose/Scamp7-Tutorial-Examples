@@ -33,6 +33,9 @@ int main()
 		generate_boxes = true;//trigger generation of boxes
     });
 
+	int output_bounding_box = 1;
+	vs_gui_add_switch("output_bounding_box", true, &output_bounding_box);
+
 	//Toggle if to refresh the content of S0 each frame to prevent it decaying
     int refresh_S0 = 1;
     vs_gui_add_switch("refresh_S0", true, &refresh_S0);
@@ -59,7 +62,7 @@ int main()
 				scamp7_kernel_begin();
 					CLR(S0); //Clear content of S0
 				scamp7_kernel_end();
-				for(int n = 0 ; n < 30 ; n++)
+				for(int n = 0 ; n < 50 ; n++)
 				{
 					//Load box of random location and dimensions into S5
 					int pos_x = distr(gen);
@@ -72,6 +75,30 @@ int main()
 						OR(S0,S5);//Add box in S5 to content of S0
 					scamp7_kernel_end();
 				}
+
+
+				scamp7_kernel_begin();
+					CLR(S1); //Clear content of S0
+				scamp7_kernel_end();
+				for(int n = 0 ; n < 25 ; n++)
+				{
+					//Load box of random location and dimensions into S5
+					int pos_x = distr(gen);
+					int pos_y = distr(gen);
+					int width = 1+distr(gen)/5;
+					int height = 1+distr(gen)/5;
+					DREG_load_centered_rect(S5,pos_x,pos_y,width,height);
+
+					scamp7_kernel_begin();
+						OR(S1,S5);//Add box in S5 to content of S0
+					scamp7_kernel_end();
+				}
+
+				scamp7_kernel_begin();
+					NOT(S5,S1);
+					AND(S0,S5,S0);
+				scamp7_kernel_end();
+
 				generate_boxes = false;
 			}
 
@@ -103,6 +130,28 @@ int main()
 				scamp7_kernel_begin();
 					MOV(S2,RZ);//Copy result of flooding S2
 				scamp7_kernel_end();
+			}
+
+
+		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+		//OPTIONALLY OUTPUT THE BOUNDING BOX OF THE FLOODED SHAPE
+
+			if(output_bounding_box)
+			{
+			    uint8_t bb_data [4];
+				scamp7_output_boundingbox(S2,display_02,bb_data);
+
+				int bb_top = bb_data[0];
+				int bb_bottom = bb_data[2];
+				int bb_left = bb_data[1];
+				int bb_right = bb_data[3];
+
+				int bb_width = bb_right-bb_left;
+				int bb_height = bb_bottom-bb_top;
+				int bb_center_x = (bb_left+bb_right)/2;
+				int bb_center_y = (bb_top+bb_bottom)/2;
+
+				vs_post_text("bounding box data X:%d Y:%d W:%d H:%d\n",bb_center_x,bb_center_y,bb_width,bb_height);
 			}
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

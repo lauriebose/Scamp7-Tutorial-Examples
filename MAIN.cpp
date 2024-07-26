@@ -8,6 +8,7 @@
 #define EX_RF_AND_RM -7
 #define EX_GLOBAL_OR -8
 #define EX_SHAPE_EXTRACTION -9
+#define EX_DREG_BOUNDING_BOX -10
 
 #define EX0_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -22,7 +23,9 @@
 #define EX10_HALF_SCALING 10
 #define EX_DREG_FLOODING 11
 
-#define selected_algo -9
+
+
+#define selected_algo -10
 
 
 #if selected_algo == 999
@@ -71,5 +74,7 @@
 	#include "EX_GLOBAL_OR.hpp"
 #elif selected_algo == EX_SHAPE_EXTRACTION
 	#include "EX_SHAPE_EXTRACTION.hpp"
+#elif selected_algo == EX_DREG_BOUNDING_BOX
+	#include "EX_DREG_BOUNDING_BOX.hpp"
 #endif
 
