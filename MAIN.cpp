@@ -1,3 +1,4 @@
+
 #define EX_KERNEL_COST -1
 #define EX_AREG_DECAY -2
 #define EX_AREG_SATURATION -3
@@ -6,6 +7,7 @@
 #define EX_DREG_LOAD_PATTERN -6
 #define EX_RF_AND_RM -7
 #define EX_GLOBAL_OR -8
+#define EX_SHAPE_EXTRACTION -9
 
 #define EX0_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -20,7 +22,7 @@
 #define EX10_HALF_SCALING 10
 #define EX_DREG_FLOODING 11
 
-#define selected_algo -8
+#define selected_algo -9
 
 
 #if selected_algo == 999
@@ -67,5 +69,7 @@
 	#include "EX_RF_AND_RM.hpp"
 #elif selected_algo == EX_GLOBAL_OR
 	#include "EX_GLOBAL_OR.hpp"
+#elif selected_algo == EX_SHAPE_EXTRACTION
+	#include "EX_SHAPE_EXTRACTION.hpp"
 #endif
 
