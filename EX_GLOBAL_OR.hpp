@@ -1,6 +1,5 @@
-#include <scamp7.hpp>
-using namespace SCAMP7_PE;
-#include "../../s5d_m0_scamp7/src/debug_gui.hpp"
+#include <scamp5.hpp>
+using namespace SCAMP5_PE;
 
 void DREG_load_centered_rect(dreg_t reg, int x, int y, int width, int height);
 
@@ -10,7 +9,6 @@ vs_stopwatch output_timer;
 int main()
 {
     vs_init();
-//   	setup_voltage_configurator();//GLOBAL OR FLASHES IF THIS IS NOT HERE????!!!!
 
     const int display_size = 2;
     vs_handle display_00 = vs_gui_add_display("S0 (box)",0,0,display_size);
@@ -48,34 +46,34 @@ int main()
 			DREG_load_centered_rect(S0,box_x,box_y,box_width,box_height);
 
 			//Load two points into S1
-			scamp7_load_point(S5,point_y,point_x);
-			scamp7_load_point(S6,point2_y,point2_x);
-			scamp7_kernel_begin();
+			scamp5_load_point(S5,point_y,point_x);
+			scamp5_load_point(S6,point2_y,point2_x);
+			scamp5_kernel_begin();
 				MOV(S1,S5);
 				OR(S1,S6);
-			scamp7_kernel_end();
+			scamp5_kernel_end();
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //COMPUTE VARIOUS LOGIC OPERATIONS
-			scamp7_kernel_begin();
+			scamp5_kernel_begin();
 				AND(S3,S0,S1);
-			scamp7_kernel_end();
+			scamp5_kernel_end();
 
-			int point_inside_rect = scamp7_global_or(S3);
+			bool point_inside_rect = scamp5_global_or(S3,0,0,255,255) > 0 ? true : false;
 
-			if(point_inside_rect == 1)
+			if(point_inside_rect)
 			{
 				vs_post_text("TRUE \n");
-			   scamp7_kernel_begin();
+			   scamp5_kernel_begin();
 					SET(S2);
-				scamp7_kernel_end();
+				scamp5_kernel_end();
 			}
 			else
 			{
 				vs_post_text("FALSE \n");
-				scamp7_kernel_begin();
+				scamp5_kernel_begin();
 					CLR(S2);
-				scamp7_kernel_end();
+				scamp5_kernel_end();
 			}
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -84,11 +82,10 @@ int main()
         	output_timer.reset();
 
 			 //show DREG of box & box2
-			scamp7_output_image(S0,display_00);
-			scamp7_output_image(S1,display_01);
-			scamp7_output_image(S3,display_10);//show OR result
-			scamp7_output_image(S2,display_11);//show AND result
-
+			scamp5_output_image(S0,display_00);
+			scamp5_output_image(S1,display_01);
+			scamp5_output_image(S3,display_10);//show OR result
+			scamp5_output_image(S2,display_11);//show AND result
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -121,6 +118,6 @@ void DREG_load_centered_rect(dreg_t reg, int x, int y, int width, int height)
 	}
 	int bottom_row = top_row+height;
 	int left_column = right_column+width;
-	scamp7_load_region(reg, top_row, right_column, bottom_row, left_column);
+	scamp5_load_rect(reg, top_row, right_column, bottom_row, left_column);
 }
 
