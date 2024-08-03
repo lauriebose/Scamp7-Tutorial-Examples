@@ -1,10 +1,11 @@
 #include <scamp7.hpp>
-#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+
+#include "MISC/MISC_FUNCS.hpp"
 using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch errode_expand_timer;
+vs_stopwatch areg_shift_timer;
 
 int main()
 {
@@ -65,7 +66,7 @@ int main()
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//shift content of S1 using DNEWS
 
-  			errode_expand_timer.reset();
+  			areg_shift_timer.reset();
 
   			//First shift horizontally
   			{
@@ -155,7 +156,7 @@ int main()
 				}
   			}
 
-  			int time_spent_shifting = errode_expand_timer.get_usec();
+  			int time_spent_shifting = areg_shift_timer.get_usec();
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

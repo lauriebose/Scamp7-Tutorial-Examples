@@ -1,12 +1,11 @@
 #include <scamp7.hpp>
-#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+
+#include "MISC/MISC_FUNCS.hpp"
 using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
 vs_stopwatch scaling_timer;
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height);
 
 int main()
 {
@@ -79,8 +78,8 @@ int main()
 
 					//perform DNEWS on S0 which stores the rows from which data is copied at each step
 					//move the row of 1s in the top half up, and that in the bottom half down
-					DNEWS0(S5,S0);
-					MOV(S0,S5);
+					DNEWS0(S4,S0);
+					MOV(S0,S4);
 				scamp7_kernel_end();
 			}
 
@@ -113,24 +112,6 @@ int main()
     }
 
     return 0;
-}
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
-{
-	int top_left_row = centre_y-height/2;
-	if(top_left_row < 0)
-	{
-		height += top_left_row;
-		top_left_row = 0;
-	}
-	int top_left_column = centre_x-width/2;
-	if(top_left_column < 0)
-	{
-		width += top_left_column;
-		top_left_column = 0;
-	}
-
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
 }
 
 

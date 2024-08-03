@@ -1,5 +1,5 @@
 #include <scamp7.hpp>
-#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+#include "MISC/MISC_FUNCS.hpp"
 using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
@@ -73,26 +73,26 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //OUTPUT IMAGES
 
-output_timer.reset();
-if(image_output)
-{
-	//display the contents of PE registers as images, displaying 3 images for A,B,C
-	if(use_4bit_image_output)
-	{
-		//output AREG quickly using 4bit approximation
-		output_4bit_image_via_DNEWS(A,display_00);
-		output_4bit_image_via_DNEWS(B,display_01);
-		output_4bit_image_via_DNEWS(C,display_02);
-	}
-	else
-	{
-		//output AREG slowly at higher accuracy
-		scamp7_output_image(A,display_00);
-		scamp7_output_image(B,display_01);
-		scamp7_output_image(C,display_02);
-	}
-}
-int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
+			output_timer.reset();
+			if(image_output)
+			{
+				//display the contents of PE registers as images, displaying 3 images for A,B,C
+				if(use_4bit_image_output)
+				{
+					//output AREG quickly using 4bit approximation
+					output_4bit_image_via_DNEWS(A,display_00);
+					output_4bit_image_via_DNEWS(B,display_01);
+					output_4bit_image_via_DNEWS(C,display_02);
+				}
+				else
+				{
+					//output AREG slowly at higher accuracy
+					scamp7_output_image(A,display_00);
+					scamp7_output_image(B,display_01);
+					scamp7_output_image(C,display_02);
+				}
+			}
+			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT TEXT INFO

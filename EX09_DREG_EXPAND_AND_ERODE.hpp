@@ -2,14 +2,13 @@
 
 
 #include <scamp7.hpp>
-#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+
+#include "MISC/MISC_FUNCS.hpp"
 using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch errode_expand_timer;
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height);
+vs_stopwatch areg_shift_timer;
 
 int main()
 {
@@ -66,7 +65,7 @@ int main()
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//PERFORM DREG EXPANSION AND EROSION
 
-  			errode_expand_timer.reset();
+  			areg_shift_timer.reset();
 
 
 
@@ -161,7 +160,7 @@ int main()
   			}
 
 
-  			int time_spent_on_errode_expand = errode_expand_timer.get_usec();
+  			int time_spent_on_errode_expand = areg_shift_timer.get_usec();
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -182,22 +181,4 @@ int main()
 			vs_post_text("frame time %d microseconds(%%%d image output), potential FPS ~%d \n",frame_time_microseconds,image_output_time_percentage,max_possible_frame_rate); //display this values on host
     }
     return 0;
-}
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
-{
-	int top_left_row = centre_y-height/2;
-	if(top_left_row < 0)
-	{
-		height += top_left_row;
-		top_left_row = 0;
-	}
-	int top_left_column = centre_x-width/2;
-	if(top_left_column < 0)
-	{
-		width += top_left_column;
-		top_left_column = 0;
-	}
-
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
 }

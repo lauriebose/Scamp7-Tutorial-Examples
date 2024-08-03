@@ -1,5 +1,6 @@
 #include <scamp7.hpp>
-#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+
+#include "MISC/MISC_FUNCS.hpp"
 using namespace SCAMP7_PE;
 #include "../../s5d_m0_scamp7/src/debug_gui.hpp"
 

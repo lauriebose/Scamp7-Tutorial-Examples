@@ -9,8 +9,9 @@
 #define EX_GLOBAL_OR -8
 #define EX_SHAPE_EXTRACTION -9
 #define EX_DREG_BOUNDING_BOX -10
+#define EX_DREG_FLOODING -11
 
-#define EX0_IMAGE_CAPTURE 0
+#define EX_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
 #define	EX_DREG_BASICS 2
 #define EX_FLAG 3
@@ -18,38 +19,37 @@
 #define	EX_AREG_NEWS 5
 #define	EX_SIMPLE_EDGE_DETECTION 6
 #define	EX_DNEWS 7
-#define EX8_DREG_SHIFTING 8
-#define EX9_DREG_EXPAND_AND_ERODE 9
-#define EX10_HALF_SCALING 10
-#define EX_DREG_FLOODING 11
+#define EX_DREG_SHIFTING 8
+#define EX_DREG_EXPAND_AND_ERODE 9
+#define EX_HALF_SCALING 10
 
 
 
-#define selected_algo -6
+#define selected_algo 10
 
 
 #if selected_algo == 999
-#elif selected_algo == EX0_IMAGE_CAPTURE
-	#include "EX0_IMAGE_CAPTURE.hpp"
+#elif selected_algo == EX_IMAGE_CAPTURE
+	#include "EX00_IMAGE_CAPTURE.hpp"
 #elif selected_algo == EX_IMAGE_CAPTURE_AND_AREG
 	#include "EX01_IMAGE_CAPTURE_AND_AREG.hpp"
 #elif selected_algo == EX_DREG_BASICS
 	#include "EX02_DREG_BASICS.hpp"
 #elif selected_algo == EX_FLAG
-	#include "EX3_FLAG.hpp"
+	#include "EX03_FLAG.hpp"
 #elif selected_algo == EX_IMAGE_THRESHOLDING
-	#include "EX4_IMAGE_THRESHOLDING.hpp"
+	#include "EX04_IMAGE_THRESHOLDING.hpp"
 #elif selected_algo == EX_AREG_NEWS
-	#include "EX5_AREG_NEWS.hpp"
+	#include "EX05_AREG_NEWS.hpp"
 #elif selected_algo == EX_SIMPLE_EDGE_DETECTION
-	#include "EX6_SIMPLE_EDGE_DETECTION.hpp"
+	#include "EX06_SIMPLE_EDGE_DETECTION.hpp"
 #elif selected_algo == EX_DNEWS
-	#include "EX7_DNEWS.hpp"
-#elif selected_algo == EX8_DREG_SHIFTING
-	#include "EX8_DREG_SHIFTING.hpp"
-#elif selected_algo == EX9_DREG_EXPAND_AND_ERODE
-	#include "EX9_DREG_EXPAND_AND_ERODE.hpp"
-#elif selected_algo == EX10_HALF_SCALING
+	#include "EX07_DNEWS.hpp"
+#elif selected_algo == EX_DREG_SHIFTING
+	#include "EX08_DREG_SHIFTING.hpp"
+#elif selected_algo == EX_DREG_EXPAND_AND_ERODE
+	#include "EX09_DREG_EXPAND_AND_ERODE.hpp"
+#elif selected_algo == EX_HALF_SCALING
 	#include "EX10_HALF_SCALING.hpp"
 
 

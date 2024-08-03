@@ -1,10 +1,7 @@
 #include <scamp7.hpp>
-#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+#include "MISC/MISC_FUNCS.hpp"
 #include "../../s5d_m0_scamp7/src/debug_gui.hpp"
 using namespace SCAMP7_PE;
-
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height);
 
 int main()
 {
@@ -16,7 +13,7 @@ int main()
 
     int disp_size = 2;
     auto display_00 = vs_gui_add_display("A",0,0,disp_size);
-    auto display_01 = vs_gui_add_display("",0,disp_size,disp_size);
+    auto display_01 = vs_gui_add_display("B",0,disp_size,disp_size);
     auto display_02 = vs_gui_add_display("ERROR",0,disp_size*2,disp_size);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -118,23 +115,3 @@ int main()
     }
     return 0;
 }
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
-{
-
-	int top_left_row = centre_y-height/2;
-	if(top_left_row < 0)
-	{
-		height += top_left_row;
-		top_left_row = 0;
-	}
-	int top_left_column = centre_x-width/2;
-	if(top_left_column < 0)
-	{
-		width += top_left_column;
-		top_left_column = 0;
-	}
-
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
-}
-

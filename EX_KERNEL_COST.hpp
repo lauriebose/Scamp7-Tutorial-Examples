@@ -1,13 +1,10 @@
 #include <scamp7.hpp>
-#include "MISC/OUTPUT_AREG_BITSTACK.hpp"
+#include "MISC/MISC_FUNCS.hpp"
 using namespace SCAMP7_PE;
 
 vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
-vs_stopwatch errode_expand_timer;
-
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height);
+vs_stopwatch areg_shift_timer;
 
 int main()
 {
@@ -72,7 +69,7 @@ int main()
 			if(kernel_selection == 0)
 			{
 				vs_post_text("perform 100 kernels of length 2\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 100 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -80,13 +77,13 @@ int main()
 						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 			if(kernel_selection == 1)
 			{
 				vs_post_text("perform 50 kernels of length 4\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 50 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -96,13 +93,13 @@ int main()
 						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 			if(kernel_selection == 2)
 			{
 				vs_post_text("perform 25 kernels of length 8\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 25 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -116,13 +113,13 @@ int main()
 						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 			if(kernel_selection == 3)
 			{
 				vs_post_text("perform 20 kernels of length 10\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 20 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -138,14 +135,14 @@ int main()
 						MOV(S1,S6);
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 
 			if(kernel_selection == 4)
 			{
 				vs_post_text("perform 10 kernels of length 20\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 10 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -158,13 +155,13 @@ int main()
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 			if(kernel_selection == 5)
 			{
 				vs_post_text("perform 5 kernels of length 40\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 5 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -176,13 +173,13 @@ int main()
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 			if(kernel_selection == 6)
 			{
 				vs_post_text("perform 4 kernels of length 50\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 4 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -194,14 +191,14 @@ int main()
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 
 			if(kernel_selection == 7)
 			{
 				vs_post_text("perform 2 kernels of length 100\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				for(int n = 0 ; n < 2 ; n++)
 				{
 					scamp7_kernel_begin();
@@ -213,13 +210,13 @@ int main()
 						}
 					scamp7_kernel_end();
 				}
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 			if(kernel_selection == 8)
 			{
 				vs_post_text("perform 1 kernel of length 200\n");
-				errode_expand_timer.reset();
+				areg_shift_timer.reset();
 				scamp7_kernel_begin();
 					//loop to avoid writing this out 100 times!
 					for(int i = 0; i < 100 ; i++)
@@ -228,7 +225,7 @@ int main()
 						MOV(S1,S6);
 					}
 				scamp7_kernel_end();
-				time_spent_shifting = errode_expand_timer.get_usec();
+				time_spent_shifting = areg_shift_timer.get_usec();
 			}
 
 			vs_post_text("time spent shifting %d \n",time_spent_shifting);
@@ -253,23 +250,5 @@ int main()
     return 0;
 }
 
-
-void DREG_load_centered_rect(dreg_t dr, int centre_x, int centre_y, int width, int height)
-{
-	int top_left_row = centre_y-height/2;
-	if(top_left_row < 0)
-	{
-		height += top_left_row;
-		top_left_row = 0;
-	}
-	int top_left_column = centre_x-width/2;
-	if(top_left_column < 0)
-	{
-		width += top_left_column;
-		top_left_column = 0;
-	}
-
-	scamp7_load_region(dr, top_left_row, top_left_column, top_left_row+height, top_left_column+width);
-}
 
 
