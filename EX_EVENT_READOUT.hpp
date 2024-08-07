@@ -1,7 +1,7 @@
-#include <scamp7.hpp>
+#include <scamp5.hpp>
 
 #include "MISC/MISC_FUNCS.hpp"
-using namespace SCAMP7_PE;
+using namespace SCAMP5_PE;
 
 #include <iostream>
 #include <string>
@@ -55,24 +55,39 @@ int main()
         //LOAD EXAMPLE DATA TO DREG TO SCAN EVENTS FROM
 
 
-        scamp7_load_pattern(S5,70,70,128,128);
-        scamp7_load_point(RN,point_y,point_x);
-        scamp7_load_point(RS,point_y2,point_x2);
-        scamp7_kernel_begin();
-			OR(S5,RN);
-			OR(S5,RS);
-		scamp7_kernel_end();
+      	scamp5_kernel_begin();
+			CLR(S5);
+		scamp5_kernel_end();
+		int point_spacing_x = 80;
+		int point_spacing_y = 60;
+		for(int x= 0 ; x < 256; x+=point_spacing_x)
+		{
+			for(int y = 0 ; y < 256; y+=point_spacing_y)
+			{
+				 scamp5_load_point(S6,y,x);
+				 scamp5_kernel_begin();
+					OR(S5,S6);
+				 scamp5_kernel_end();
+			}
+		}
+
+//        scamp5_load_point(RN,point_y,point_x);
+//        scamp5_load_point(RS,point_y2,point_x2);
+//        scamp5_kernel_begin();
+//			OR(S5,RN);
+//			OR(S5,RS);
+//		scamp5_kernel_end();
 
 		event_readout_timer.reset();
-		scamp7_scan_events(S5,event_data,event_to_scan);
+		scamp5_scan_events(S5,event_data,event_to_scan);
 		int time_spent_on_event_readout = event_readout_timer.get_usec();
 
-//		scamp7_output_events(S5,display_00,event_to_scan);
+//		scamp5_output_events(S5,display_00,event_to_scan);
 
 
-		 scamp7_kernel_begin();
+		 scamp5_kernel_begin();
 			CLR(S4);
-		scamp7_kernel_end();
+		scamp5_kernel_end();
 
 		std::string event_data_string;
 		for(int n = 0 ; n < event_to_scan ; n++)
@@ -86,10 +101,10 @@ int main()
 			}
 
 			//DRAW SCANNED EVENTS ON OVERLAY DISPLAY
-			scamp7_load_point(S6,event_y,event_x);
-			scamp7_kernel_begin();
+			scamp5_load_point(S6,event_y,event_x);
+			scamp5_kernel_begin();
 				OR(S4,S6);
-			scamp7_kernel_end();
+			scamp5_kernel_end();
 
 			//PRINT EVENT XYs
 			event_data_string += "(" + std::to_string(event_x) + "," + std::to_string(event_y) + "), ";
@@ -108,8 +123,8 @@ int main()
         //OUTPUT IMAGES
 
 			output_timer.reset();
-		    scamp7_output_image(S5,display_00);
-	        scamp7_output_image(S4,display_01);
+		    scamp5_output_image(S5,display_00);
+	        scamp5_output_image(S4,display_01);
 	    	int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
