@@ -26,8 +26,8 @@ int main()
     int box2_x, box2_y, box2_width, box2_height;
     vs_gui_add_slider("box2 x: ", 0, 255, 96, &box2_x);
     vs_gui_add_slider("box2 y: ", 0, 255, 96, &box2_y);
-    vs_gui_add_slider("box2 width: ", 0, 128, 64, &box2_width);
-    vs_gui_add_slider("box2 height: ", 0, 128, 64, &box2_height);
+    vs_gui_add_slider("box2 width: ", 1, 128, 64, &box2_width);
+    vs_gui_add_slider("box2 height: ", 1, 128, 64, &box2_height);
 
     while(1)
     {
