@@ -10,6 +10,9 @@
 #define EX_SHAPE_EXTRACTION -9
 #define EX_DREG_BOUNDING_BOX -10
 #define EX_DREG_FLOODING -11
+#define EX_SIMPLE_CONVOLUTIONS -12
+#define EX_DREG_DRAWING -13
+#define EX_GUI_DRAWING -14
 
 #define EX_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -25,7 +28,7 @@
 
 
 
-#define selected_algo 10
+#define selected_algo -14
 
 
 #if selected_algo == 999
@@ -76,5 +79,11 @@
 	#include "EX_SHAPE_EXTRACTION.hpp"
 #elif selected_algo == EX_DREG_BOUNDING_BOX
 	#include "EX_DREG_BOUNDING_BOX.hpp"
+#elif selected_algo == EX_SIMPLE_CONVOLUTIONS
+	#include "EX_SIMPLE_CONVOLUTIONS.hpp"
+#elif selected_algo == EX_DREG_DRAWING
+	#include "EX_DREG_DRAWING.hpp"
+#elif selected_algo == EX_GUI_DRAWING
+	#include "EX_GUI_DRAWING.hpp"
 #endif
 
