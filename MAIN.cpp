@@ -13,6 +13,7 @@
 #define EX_SIMPLE_CONVOLUTIONS -12
 #define EX_DREG_DRAWING -13
 #define EX_GUI_DRAWING -14
+#define EX_INTERLACED_DATA -15
 
 #define EX_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -26,9 +27,10 @@
 #define EX_DREG_EXPAND_AND_ERODE 9
 #define EX_HALF_SCALING 10
 
+#define TEST -99
 
 
-#define selected_algo -14
+#define selected_algo -15
 
 
 #if selected_algo == 999
@@ -85,5 +87,7 @@
 	#include "EX_DREG_DRAWING.hpp"
 #elif selected_algo == EX_GUI_DRAWING
 	#include "EX_GUI_DRAWING.hpp"
+#elif selected_algo == EX_INTERLACED_DATA
+	#include "EX_INTERLEAVED_DATA.hpp"
 #endif
 
