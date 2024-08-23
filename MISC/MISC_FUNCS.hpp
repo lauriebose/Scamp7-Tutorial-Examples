@@ -1,5 +1,5 @@
-#include <scamp5.hpp>
-using namespace SCAMP5_PE;
+#include <scamp7.hpp>
+using namespace SCAMP7_PE;
 
 #ifndef MISC_FUNCS_HPP
 #define MISC_FUNCS_HPP
@@ -12,8 +12,8 @@ using namespace SCAMP5_PE;
 	{
 		if(use_div)
 		{
-			scamp5_in(E,127);
-			scamp5_kernel_begin();
+			scamp7_in(E,127);
+			scamp7_kernel_begin();
 				CLR(RS,RW,RN,RE);
 
 				where(F);
@@ -49,20 +49,20 @@ using namespace SCAMP5_PE;
 					MOV(RS,FLAG);
 					mov(F,D);
 				all();
-			scamp5_kernel_end();
+			scamp7_kernel_end();
 
-	        scamp5_output_bitstack_begin(display,4);
-	        scamp5_output_bitstack_bit(RE);
-	        scamp5_output_bitstack_bit(RN);
-	        scamp5_output_bitstack_bit(RW);
-	        scamp5_output_bitstack_bit(RS);
-	        scamp5_output_bitstack_end();
+	        scamp7_output_bitstack_begin(display,4);
+	        scamp7_output_bitstack_bit(RE);
+	        scamp7_output_bitstack_bit(RN);
+	        scamp7_output_bitstack_bit(RW);
+	        scamp7_output_bitstack_bit(RS);
+	        scamp7_output_bitstack_end();
 		}
 		else
 		{
 
-			scamp5_in(E,127);
-			scamp5_kernel_begin();
+			scamp7_in(E,127);
+			scamp7_kernel_begin();
 				CLR(RS,RW,RN,RE);
 
 				where(F);
@@ -71,52 +71,52 @@ using namespace SCAMP5_PE;
 				WHERE(RF);
 					add(F,F,E);
 				all();
-			scamp5_kernel_end();
+			scamp7_kernel_end();
 
-			scamp5_in(E,64);
-			scamp5_kernel_begin();
+			scamp7_in(E,64);
+			scamp7_kernel_begin();
 				sub(E,E,F);
 				where(E);
 					NOT(RN,FLAG);
 				WHERE(RN);
 					bus(F,E);
 				all();
-			scamp5_kernel_end();
+			scamp7_kernel_end();
 
-			scamp5_in(E,32);
-			scamp5_kernel_begin();
+			scamp7_in(E,32);
+			scamp7_kernel_begin();
 				sub(E,E,F);
 				where(E);
 					NOT(RW,FLAG);
 				WHERE(RW);
 					bus(F,E);
 				all();
-			scamp5_kernel_end();
+			scamp7_kernel_end();
 
-			scamp5_in(E,16);
-			scamp5_kernel_begin();
+			scamp7_in(E,16);
+			scamp7_kernel_begin();
 				sub(E,E,F);
 				where(E);
 					NOT(RS,FLAG);
 				WHERE(RS);
 					bus(F,E);
 				all();
-			scamp5_kernel_end();
+			scamp7_kernel_end();
 
-	        scamp5_output_bitstack_begin(display,4);
-	        scamp5_output_bitstack_bit(RE);
-	        scamp5_output_bitstack_bit(RN);
-	        scamp5_output_bitstack_bit(RW);
-	        scamp5_output_bitstack_bit(RS);
-	        scamp5_output_bitstack_end();
+	        scamp7_output_bitstack_begin(display,4);
+	        scamp7_output_bitstack_bit(RE);
+	        scamp7_output_bitstack_bit(RN);
+	        scamp7_output_bitstack_bit(RW);
+	        scamp7_output_bitstack_bit(RS);
+	        scamp7_output_bitstack_end();
 		}
 	}
 
 	void output_4bit_image_via_DNEWS(areg_t reg,vs_handle display,bool use_div = false, int in_val1 = 127, int in_val2 = 77, int in_val3 = 40, int in_val4 = 21)
 	{
-		scamp5_dynamic_kernel_begin();
+		scamp7_dynamic_kernel_begin();
 			mov(F,reg);
-		scamp5_dynamic_kernel_end();
+		scamp7_dynamic_kernel_end();
 		output_4bit_F_via_DNEWS(reg,display,use_div,in_val1,in_val2,in_val3,in_val4);
 	}
 
@@ -141,6 +141,6 @@ using namespace SCAMP5_PE;
 		}
 		int bottom_row = top_row+height;
 		int left_column = right_column+width;
-		scamp5_load_rect(reg, top_row, right_column, bottom_row-1, left_column-1);
+		scamp7_load_region(reg, top_row, right_column, bottom_row-1, left_column-1);
 	}
 #endif
