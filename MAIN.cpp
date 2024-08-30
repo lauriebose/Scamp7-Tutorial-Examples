@@ -17,6 +17,7 @@
 #define EX_ADC_DAC -16
 #define EX_DREG_SHIFTING1 -17
 #define EX_DREG_SHIFTING2 -18
+#define EX_AREG_QUANTIZED_STORAGE - 19
 
 #define EX_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -32,7 +33,7 @@
 #define TEST -99
 
 
-#define selected_algo -18
+#define selected_algo -19
 
 
 #if selected_algo == 999
@@ -95,5 +96,7 @@
 	#include "EX_DREG_SHIFTING1.hpp"
 #elif selected_algo == EX_DREG_SHIFTING2
 	#include "EX_DREG_SHIFTING2.hpp"
+#elif selected_algo == EX_AREG_QUANTIZED_STORAGE
+	#include "EX_AREG_QUANTIZED_STORAGE.hpp"
 #endif
 
