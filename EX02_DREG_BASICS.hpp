@@ -20,8 +20,8 @@ int main()
     int box1_x, box1_y, box1_width, box1_height;
     vs_gui_add_slider("box1 x: ", 0, 255, 128, &box1_x);
     vs_gui_add_slider("box1 y: ", 0, 255, 128, &box1_y);
-    vs_gui_add_slider("box1 width: ", 0, 128, 32, &box1_width);
-    vs_gui_add_slider("box1 height: ", 0, 128, 64, &box1_height);
+    vs_gui_add_slider("box1 width: ", 1, 128, 32, &box1_width);
+    vs_gui_add_slider("box1 height: ", 1, 128, 64, &box1_height);
 
     int box2_x, box2_y, box2_width, box2_height;
     vs_gui_add_slider("box2 x: ", 0, 255, 96, &box2_x);

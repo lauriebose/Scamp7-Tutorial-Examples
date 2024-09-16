@@ -10,14 +10,16 @@
 #define EX_SHAPE_EXTRACTION -9
 #define EX_DREG_BOUNDING_BOX -10
 #define EX_DREG_FLOODING -11
-#define EX_SIMPLE_CONVOLUTIONS -12
-#define EX_DREG_DRAWING -13
-#define EX_GUI_DRAWING -14
-#define EX_INTERLEAVED_DATA -15
-#define EX_ADC_DAC -16
-#define EX_DREG_SHIFTING1 -17
-#define EX_DREG_SHIFTING2 -18
-#define EX_AREG_QUANTIZED_STORAGE - 19
+#define EX_DREG_FLOODING2 -12
+#define EX_SIMPLE_CONVOLUTIONS -13
+#define EX_DREG_DRAWING -14
+#define EX_GUI_DRAWING -15
+#define EX_INTERLEAVED_DATA -16
+#define EX_ADC_DAC -17
+#define EX_DREG_SHIFTING1 -18
+#define EX_DREG_SHIFTING2 -19
+#define EX_AREG_QUANTIZED_STORAGE -20
+
 
 #define EX_IMAGE_CAPTURE 0
 #define EX_IMAGE_CAPTURE_AND_AREG 1
@@ -30,10 +32,7 @@
 #define EX_DREG_EXPAND_AND_ERODE 9
 #define EX_HALF_SCALING 10
 
-#define TEST -99
-
-
-#define selected_algo -19
+#define selected_algo -9
 
 
 #if selected_algo == 999
@@ -64,6 +63,8 @@
 	#include "EX_EVENT_READOUT.hpp"
 #elif selected_algo == EX_DREG_FLOODING
 	#include "EX_DREG_FLOODING.hpp"
+#elif selected_algo == EX_DREG_FLOODING2
+	#include "EX_DREG_FLOODING2.hpp"
 #elif selected_algo == EX_AREG_DECAY
 	#include "EX_AREG_DECAY.hpp"
 #elif selected_algo == EX_KERNEL_COST

@@ -139,6 +139,7 @@ int main()
 					decision_value = current_value + quantization_interval/2;
 				}
 
+				//snap all remaining PEs that have not been quantized to the max quantization value
 				scamp7_in(E,127);
 				scamp7_kernel_begin();
 					WHERE(S6);

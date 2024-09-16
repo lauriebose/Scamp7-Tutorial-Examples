@@ -17,10 +17,15 @@ int main()
     auto display_01 = vs_gui_add_display("Shifted Imag, AREG B",0,display_size,display_size);
     auto display_02 = vs_gui_add_display("Captured Image - Shifted Image, AREG C = A - B",0,2*display_size,display_size);
 
-    int shift_x = 40;
-    vs_gui_add_slider("shift x",-128,128,shift_x,&shift_x);
-    int shift_y = 10;
-    vs_gui_add_slider("shift y",-128,128,shift_y,&shift_y);
+    int pre_divisions = 2;
+    vs_gui_add_slider("pre_divisions",0,5,pre_divisions,&pre_divisions);
+
+    int steps = 9;
+    vs_gui_add_slider("steps",0,9,steps,&steps);
+
+    int maxpooling = 0;
+    vs_gui_add_slider("maxpooling",0,9,maxpooling,&maxpooling);
+
 
 	setup_voltage_configurator(false);
 
@@ -45,61 +50,96 @@ int main()
 
 			areg_shift_timer.reset();
 
-			if(shift_x > 0)
+			for(int n = 0 ; n < pre_divisions ; n++)
 			{
-				for(int x = 0; x < shift_x; x++)
-				{
-					//KERNEL SHIFTS B ONE "PIXEL" RIGHT
-					scamp7_kernel_begin();
-						bus(NEWS,B);//NEWS = -B
-						bus(B,XW);//B = -NEWS OF WEST NEIGHBOR
-					scamp7_kernel_end();
-				}
-			}
-			else
-			{
-				for(int x = 0; x < -shift_x; x++)
-				{
-					//KERNEL SHIFTS B ONE "PIXEL" LEFT
-					scamp7_kernel_begin();
-						bus(NEWS,B);//NEWS = -B
-						bus(B,XE);//B = -NEWS OF EAST NEIGHBOR
-					scamp7_kernel_end();
-				}
+				scamp7_kernel_begin();
+					diva(B,F,E);
+				scamp7_kernel_end();
 			}
 
-		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-		//NOW SHIFT AREG VERTICALLY
-			if(shift_y > 0)
+
+			if(steps > 0)
 			{
-				for(int y = 0; y < shift_y; y++)
-				{
-					//KERNEL SHIFTS B ONE "PIXEL" UP
-					scamp7_kernel_begin();
-						bus(NEWS,B);//NEWS = -B
-						bus(B,XS);//B = -NEWS OF SOUTH NEIGHBOR
-					scamp7_kernel_end();
-				}
-			}
-			else
-			{
-				for(int y = 0; y < -shift_y; y++)
-				{
-					//KERNEL SHIFTS B ONE "PIXEL" DOWN
-					scamp7_kernel_begin();
-						bus(NEWS,B);//NEWS = -B
-						bus(B,XN);//B = -NEWS OF NORTH NEIGHBOR
-					scamp7_kernel_end();
-				}
+				scamp7_kernel_begin();
+					neg(C,B);
+				scamp7_kernel_end();
 			}
 
-			int time_spent_on_shifting = areg_shift_timer.get_usec();
+			if(steps > 1)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XW);//B = -NEWS OF WEST NEIGHBOR
+					sub(C,C,B);
+				scamp7_kernel_end();
+			}
 
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //SUBTRACT SHIFTED IMAGE FROM ORIGINAL
-			scamp7_kernel_begin();
-				sub(C,A,B);
-			scamp7_kernel_end();
+			if(steps > 2)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XW);//B = -NEWS OF WEST NEIGHBOR
+					sub(C,C,B);
+				scamp7_kernel_end();
+			}
+
+			if(steps > 3)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XS);//B = -NEWS OF SOUTH NEIGHBOR
+					sub(C,C,B);
+				scamp7_kernel_end();
+			}
+
+			if(steps > 4)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XE);//B = -NEWS OF EAST NEIGHBOR
+					sub(C,C,B);
+				scamp7_kernel_end();
+			}
+
+			if(steps > 5)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XE);//B = -NEWS OF EAST NEIGHBOR
+					add(C,C,B);
+				scamp7_kernel_end();
+			}
+
+			if(steps > 6)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XS);//B = -NEWS OF SOUTH NEIGHBOR
+					add(C,C,B);
+				scamp7_kernel_end();
+			}
+
+			if(steps > 7)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XW);//B = -NEWS OF WEST NEIGHBOR
+					add(C,C,B);
+				scamp7_kernel_end();
+			}
+
+			if(steps > 8)
+			{
+				scamp7_kernel_begin();
+					bus(NEWS,B);//NEWS = -B
+					bus(B,XW);//B = -NEWS OF WEST NEIGHBOR
+					add(C,C,B);
+				scamp7_kernel_end();
+			}
+
+
+			int time_spent_on_convolution = areg_shift_timer.get_usec();
+
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT REGISTERS AS IMAGES
@@ -113,7 +153,7 @@ int main()
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT TEXT INFO
 
-	        vs_post_text("time spent on shifting %d microseconds\n",time_spent_on_shifting);
+	        vs_post_text("time spent on convolution %d microseconds\n",time_spent_on_convolution);
 
 			int frame_time_microseconds = frame_timer.get_usec(); //get the time taken this frame
 			int max_possible_frame_rate = 1000000/frame_time_microseconds; //calculate the possible max FPS

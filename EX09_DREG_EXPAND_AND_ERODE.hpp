@@ -33,8 +33,8 @@ int main()
 	    int box1_x, box1_y, box1_width, box1_height;
 	    vs_gui_add_slider("box1 x: ", 0, 255, 82, &box1_x);
 	    vs_gui_add_slider("box1 y: ", 0, 255, 96, &box1_y);
-	    vs_gui_add_slider("box1 width: ", 0, 128, 37, &box1_width);
-	    vs_gui_add_slider("box1 height: ", 0, 128, 37, &box1_height);
+	    vs_gui_add_slider("box1 width: ", 1, 128, 37, &box1_width);
+	    vs_gui_add_slider("box1 height: ", 1, 128, 37, &box1_height);
 
 		int use_stepwise = 1;
 		vs_gui_add_switch("1 dir per step",use_stepwise == 1,&use_stepwise);

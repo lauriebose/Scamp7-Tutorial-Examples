@@ -71,14 +71,14 @@ int main()
 
 			if(white_pixels_inside_rect )
 			{
-			   vs_post_text("global_or %d TRUE\n",global_or_value);
+			   vs_post_text("global_or : TRUE, Value : %d\n",global_or_value);
 			   scamp7_kernel_begin();
 					SET(S2);
 				scamp7_kernel_end();
 			}
 			else
 			{
-				vs_post_text("global_or %d FALSE\n",global_or_value);
+				vs_post_text("global_or : FALSE, Value : %d\n",global_or_value);
 				scamp7_kernel_begin();
 					CLR(S2);
 				scamp7_kernel_end();

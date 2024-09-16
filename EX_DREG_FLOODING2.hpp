@@ -1,4 +1,5 @@
 #include <scamp7.hpp>
+#include <random>
 #include "MISC/MISC_FUNCS.hpp"
 using namespace SCAMP7_PE;
 
@@ -22,9 +23,16 @@ int main()
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
 
+		bool generate_boxes = true;
+		vs_handle gui_button_generate_boxes = vs_gui_add_button("generate boxes");
+		vs_on_gui_update(gui_button_generate_boxes,[&](int32_t new_value)//function that will be called whenever button is pressed
+		{
+			generate_boxes = true;//trigger generation of boxes
+	    });
+
 	    //control the box drawn into DREG & used as the flooding Source
 	    int flood_source_box_x, flood_source_box_y,flood_source_box_width,flood_source_box_height;
-		vs_gui_add_slider("flood_sourec_box_x: ",1,255,64,&flood_source_box_x);
+		vs_gui_add_slider("flood_source_box_x: ",1,255,64,&flood_source_box_x);
 		vs_gui_add_slider("flood_source_box_y: ",1,255,125,&flood_source_box_y);
 		vs_gui_add_slider("flood_source_box_width: ",1,100,20,&flood_source_box_width);
 		vs_gui_add_slider("flood_source_box_height: ",1,100,20,&flood_source_box_height);
@@ -56,8 +64,17 @@ int main()
 		int single_kernel_flood_example = 0;
 		vs_gui_add_switch("use_single_kernel",single_kernel_flood_example == 1,&single_kernel_flood_example);
 
-		int negate_mask = 1;
+		int negate_mask = 0;
 		vs_gui_add_switch("negate_mask",negate_mask == 1,&negate_mask);
+
+		//Setup objects for random number generation
+		//This code looks like nonsense as the std classes here overload the function call operator...
+		std::random_device rd;//A true random number
+		std::mt19937 gen(rd()); // Mersenne Twister pseudo random number generator, seeded with a true random number
+		int random_min_value = 0;
+		int random_max_value = 255;
+		//Create distribution object to map a given random value to 0-255
+		std::uniform_int_distribution<> distr(random_min_value, random_max_value);
 
     //CONTINOUS FRAME LOOP
     while(true)
@@ -66,6 +83,73 @@ int main()
 
     	vs_disable_frame_trigger();
         vs_frame_loop_control();
+
+        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+              //GENERATES RANDOM BOXES IN DREG S0 IF BUTTON WAS PRESSED (OR PROGRAM JUST STARTED)
+
+      			if(generate_boxes)
+      			{
+      				const int boxes_to_add = 50;
+      				const int boxes_to_subtract = 25;
+
+      				//Generate a set of random rectangles across DREG plane S0
+      				{
+      					scamp7_kernel_begin();
+      						CLR(S0); //Clear content of S0
+      					scamp7_kernel_end();
+      					for(int n = 0 ; n < boxes_to_add ; n++)
+      					{
+      						//Load box of random location and dimensions into S5
+      						int pos_x = distr(gen);
+      						int pos_y = distr(gen);
+      						int width = 1+distr(gen)/6;
+      						int height = 1+distr(gen)/6;
+      						DREG_load_centered_rect(S5,pos_x,pos_y,width,height);
+      						scamp7_kernel_begin();
+      							OR(S0,S5);//Add box in S5 to content of S0
+      						scamp7_kernel_end();
+      					}
+      				}
+//
+//      				//Generate another set of random rectangles across DREG plane S1
+//      				scamp7_kernel_begin();
+//      					CLR(S6); //Clear content of S1
+//      				scamp7_kernel_end();
+//      				for(int n = 0 ; n < boxes_to_subtract ; n++)
+//      				{
+//      					//Load box of random location and dimensions into S5
+//      					int pos_x = distr(gen);
+//      					int pos_y = distr(gen);
+//      					int width = 1+distr(gen)/5;
+//      					int height = 1+distr(gen)/5;
+//      					DREG_load_centered_rect(S5,pos_x,pos_y,width,height);
+//      					scamp7_kernel_begin();
+//      						OR(S6,S5);//Add box in S5 to content of S0
+//      					scamp7_kernel_end();
+//      				}
+//
+//      				//Subtract the rectangles in S1 from those of S2
+//      				scamp7_kernel_begin();
+//      					NOT(S5,S6);//S5 = Inverted content of S1
+//      					AND(S0,S5,S0);//perform AND to "Subtract" S1 rectangles from S0
+//      				scamp7_kernel_end();
+
+      				generate_boxes = false;
+      			}
+
+      			//Create a copy or negated copy of these rectangles to use as the flooding mask
+      			if(negate_mask)
+      			{
+      				scamp7_kernel_begin();
+      					NOT(S4,S0);
+      				scamp7_kernel_end();
+      			}
+      			else
+      			{
+      				scamp7_kernel_begin();
+						MOV(S4,S0);
+					scamp7_kernel_end();
+      			}
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //DRAW CONTENT INTO DIGITAL REGISTERS FOR FLOODING EXAMPLE
@@ -77,24 +161,6 @@ int main()
 			scamp7_kernel_begin();
 				MOV(S3,S1);
 			scamp7_kernel_end();
-
-			//Draw content to use as the Flooding Mask, Flooding is restricted to PEs in which Mask = 1
-			{
-				scamp7_kernel_begin();
-					CLR(S2);
-				scamp7_kernel_end();
-
-				scamp7_draw_begin(S2);
-					scamp7_draw_circle(127,127,100);
-					scamp7_draw_circle(127,127,50);
-					scamp7_draw_line(10,0,10,150);
-					scamp7_draw_line(10,150,100,150);
-					if(negate_mask)
-					{
-						scamp7_draw_negate();
-					}
-				scamp7_draw_end();
-			}
 
 			int time_spent_drawing = drawing_timer.get_usec();
 
@@ -145,8 +211,8 @@ int main()
 				//RF acts as the Source register, PEs where RF = 1 will spread 1s into RF registers of neighbouring PEs during flooding
 				//RZ acts as the Mask register, which restricts flooding to only those PEs where RZ = 1
 				scamp7_kernel_begin();
-					MOV(RZ,S1);//Copy the content of S1 into the Flooding Source S1
-					MOV(RF,S2);//Copy the content of S2 into the Flooding Mask S2
+					MOV(RZ,S1);//Copy the content of S1 into the Flooding Source RZ
+					MOV(RF,S4);//Copy the content of S2 into the Flooding Mask RF
 					PROP_R(RZ);//Setup propagation/flooding
 				scamp7_kernel_end();
 
@@ -189,8 +255,8 @@ int main()
 				//Example of performing flooding using native instructions
 				//By only using a single Kernel this code is more efficient however the number of flooding iterations is fixed
 				scamp7_kernel_begin();
-					MOV(RZ,S1);//Copy the content of S1 into the Flooding Source S1
-					MOV(RF,S2);//Copy the content of S2 into the Flooding Mask S2
+					MOV(RZ,S1);//Copy the content of S1 into the Flooding Source RZ
+					MOV(RF,S4);//Copy the content of S2 into the Flooding Mask RF
 					PROP_R(RZ);//Setup propagation/flooding
 					for(int n = 0 ; n < 12 ; n++)
 					{
@@ -213,12 +279,39 @@ int main()
 			{
 				//Perform flooding using provided scamp library function
 				//Floods the Source DREG (S1), restricted by the Mask DREG, for a given number of steps/iterations
-				scamp7_flood(S1,S2,flood_from_borders,flood_iterations);
+				scamp7_flood(S1,S4,flood_from_borders,flood_iterations);
 			}
 
 
 			int time_spent_flooding = flooding_timer.get_usec();
 
+
+			scamp7_kernel_begin();
+				REFRESH(S0);
+				REFRESH(S1);
+				REFRESH(S2);
+			scamp7_kernel_end();
+
+
+			//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+			//OUTPUT THE BOUNDING BOX OF THE FLOODED SHAPE
+
+				uint8_t bb_data [4];
+				scamp7_output_boundingbox(S1,display_00,bb_data);
+				scamp7_display_boundingbox(display_01,bb_data,1);
+				scamp7_display_boundingbox(display_02,bb_data,1);
+
+				int bb_top = bb_data[0];
+				int bb_bottom = bb_data[2];
+				int bb_left = bb_data[1];
+				int bb_right = bb_data[3];
+
+				int bb_width = bb_right-bb_left;
+				int bb_height = bb_bottom-bb_top;
+				int bb_center_x = (bb_left+bb_right)/2;
+				int bb_center_y = (bb_top+bb_bottom)/2;
+
+				vs_post_text("bounding box data X:%d Y:%d W:%d H:%d\n",bb_center_x,bb_center_y,bb_width,bb_height);
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//OUTPUT IMAGES
@@ -226,7 +319,7 @@ int main()
 			output_timer.reset();
 
 			scamp7_output_image(S3,display_00);
-			scamp7_output_image(S2,display_01);
+			scamp7_output_image(S0,display_01);
 			scamp7_output_image(S1,display_02);
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
