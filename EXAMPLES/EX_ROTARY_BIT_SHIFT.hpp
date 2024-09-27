@@ -4,6 +4,9 @@ using namespace SCAMP7_PE;
 
 vs_stopwatch rotary_shift_timer;
 
+void bit_shift_rotary_forwards();
+void bit_shift_rotary_backwards();
+
 int main()
 {
     vs_init();
@@ -93,65 +96,14 @@ int main()
 			//shift in the forward direction
 			if(shift_rotary == 1)
 			{
-				rotary_shift_timer.reset();
-				scamp7_kernel_begin();
-					MOV(RN,RZ);//Copy rotary content
-
-					//Bits 1-8
-					for(int n = 0 ; n < 4 ; n++)
-					{
-						ROTATE();
-						MOV(RS,RZ);//Copy rotary content
-						MOV(RZ,RN);//Paste content of previous rotary bit
-						ROTATE();
-						MOV(RN,RZ);//Copy rotary content
-						MOV(RZ,RS);//Paste content of previous rotary bit
-					}
-
-					//Bit 0
-					ROTATE();
-					MOV(RZ,RN);//Paste content of previous rotary bit
-				scamp7_kernel_end();
-				int tmp_time = rotary_shift_timer.get_usec();
-				vs_post_text("rotary shift timer %d \n",tmp_time);
+				bit_shift_rotary_forwards();
 			}
 
 			//shift in the reverse direction
 			//follows same method as forward direction
 			if(shift_rotary == -1)
 			{
-				rotary_shift_timer.reset();
-				scamp7_kernel_begin();
-					MOV(RN,RZ);
-
-					for(int n = 0 ; n < 4 ; n++)
-					{
-						//Unfortunately the index of the rotary register can only be moved "forward" via "ROTATE()"
-						//To move "backwards" through the rotary we must move forward multiple times until we loop back around...
-						for(int r = 0 ; r < 8; r++)
-						{
-							ROTATE();//Rotate 8 times, there are 9 bits, so this is equivalent to moving backwards 1 bit...
-						}
-						MOV(RS,RZ);
-						MOV(RZ,RN);
-
-						for(int r = 0 ; r < 8; r++)
-						{
-							ROTATE();
-						}
-						MOV(RN,RZ);
-						MOV(RZ,RS);
-					}
-
-					for(int r = 0 ; r < 8; r++)
-					{
-						ROTATE();
-					}
-
-					MOV(RZ,RN);
-				scamp7_kernel_end();
-				int tmp_time = rotary_shift_timer.get_usec();
-				vs_post_text("rotary shift timer %d \n",tmp_time);
+				bit_shift_rotary_backwards();
 			}
 
 			shift_rotary = 0;
@@ -175,4 +127,65 @@ int main()
 	    	scamp7_output_image(S0,display_01);
     }
     return 0;
+}
+
+void bit_shift_rotary_forwards()
+{
+	rotary_shift_timer.reset();
+	scamp7_kernel_begin();
+		MOV(RN,RZ);//Copy rotary content
+
+		//Bits 1-8
+		for(int n = 0 ; n < 4 ; n++)
+		{
+			ROTATE();
+			MOV(RS,RZ);//Copy rotary content
+			MOV(RZ,RN);//Paste content of previous rotary bit
+			ROTATE();
+			MOV(RN,RZ);//Copy rotary content
+			MOV(RZ,RS);//Paste content of previous rotary bit
+		}
+
+		//Bit 0
+		ROTATE();
+		MOV(RZ,RN);//Paste content of previous rotary bit
+	scamp7_kernel_end();
+	int tmp_time = rotary_shift_timer.get_usec();
+	vs_post_text("rotary shift timer %d \n",tmp_time);
+}
+
+void bit_shift_rotary_backwards()
+{
+	rotary_shift_timer.reset();
+	scamp7_kernel_begin();
+		MOV(RN,RZ);
+
+		for(int n = 0 ; n < 4 ; n++)
+		{
+			//Unfortunately the index of the rotary register can only be moved "forward" via "ROTATE()"
+			//To move "backwards" through the rotary we must move forward multiple times until we loop back around...
+			for(int r = 0 ; r < 8; r++)
+			{
+				ROTATE();//Rotate 8 times, there are 9 bits, so this is equivalent to moving backwards 1 bit...
+			}
+			MOV(RS,RZ);
+			MOV(RZ,RN);
+
+			for(int r = 0 ; r < 8; r++)
+			{
+				ROTATE();
+			}
+			MOV(RN,RZ);
+			MOV(RZ,RS);
+		}
+
+		for(int r = 0 ; r < 8; r++)
+		{
+			ROTATE();
+		}
+
+		MOV(RZ,RN);
+	scamp7_kernel_end();
+	int tmp_time = rotary_shift_timer.get_usec();
+	vs_post_text("rotary shift timer %d \n",tmp_time);
 }
