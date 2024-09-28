@@ -3,7 +3,7 @@
 
 using namespace SCAMP7_PE;
 
-void setup_blur_grid_in_S3(int offy, int offx, int gs_width, int gs_height);
+void setup_blur_grid_in_RS_RW(int offy, int offx, int gs_width, int gs_height);
 
 int main(){
 
@@ -127,28 +127,30 @@ int main(){
 	    	scamp7_kernel_begin();
 	    		OR(S3,S5,S6);
 			scamp7_kernel_end();
+
+			if(set_RS)
+			{
+				scamp7_kernel_begin();
+					MOV(RS,S3);
+				scamp7_kernel_end();
+			}
+			if(set_RW)
+			{
+				scamp7_kernel_begin();
+					MOV(RW,S3);
+				scamp7_kernel_end();
+			}
 		}
 		else
 		{
 			//SETUP PATTERN TO BLUR MUTUALLY EXCLUSIVE GRID CELLS
 			timer.reset();
-			setup_blur_grid_in_S3(y%h, x%w,w,h);
+			setup_blur_grid_in_RS_RW( x%w,y%h,w,h);
 			vs_post_text("%d \n", timer.get_usec());
 		}
 
 
-		if(set_RS)
-		{
-			scamp7_kernel_begin();
-				MOV(RS,S3);
-			scamp7_kernel_end();
-		}
-		if(set_RW)
-		{
-			scamp7_kernel_begin();
-				MOV(RW,S3);
-			scamp7_kernel_end();
-		}
+
 
     	if(blur_method)
     	{
@@ -182,18 +184,18 @@ int main(){
     return 0;
 }
 
-void setup_blur_grid_in_S3(int offy, int offx, int gs_width, int gs_height)
+void setup_blur_grid_in_RS_RW( int offx,int offy, int gs_width, int gs_height)
 {
 	//SETUP PATTERN TO BLUR MUTUALLY EXCLUSIVE GRID CELLS
 	scamp7_kernel_begin();
 		CLR(S4);
 	scamp7_kernel_end();
 
-	scamp7_load_region(S3,offy%gs_height,offx%gs_width,offy%gs_height+gs_height-2,offx%gs_width+gs_width-2);
+	scamp7_load_region(S5,0,offx%gs_width,255,offx%gs_width+gs_width-2);
 	scamp7_kernel_begin();
 		CLR(RE,RW,RN,RS);
 		SET(RE);
-		MOV(S5,S3);
+		MOV(S6,S5);
 	scamp7_kernel_end();
 
 	for(int gx = 0; gx < 255/gs_width ; gx++)
@@ -201,30 +203,41 @@ void setup_blur_grid_in_S3(int offy, int offx, int gs_width, int gs_height)
 		scamp7_dynamic_kernel_begin();//CAN MAKE X6 FASTER BY REMOVING DYNAMIC
 			for(int tmp_x = 0 ; tmp_x < gs_width ; tmp_x++)
 			{
-				DNEWS0(S4,S5);
-				MOV(S5,S4);
+				MOV(FLAG,S6);
+				DNEWS0(S6,FLAG);
 			}
-			MOV(S4,S3);
-			OR(S3,S5,S4);
+			OR(S5,S6);
 		scamp7_dynamic_kernel_end();
 	}
+
+
+
+	scamp7_load_region(S4,offy%gs_height,0,offy%gs_height+gs_height-2,255);
 
 	scamp7_kernel_begin();
 		CLR(RE,RW,RN,RS);
 		SET(RN);
-		MOV(S5,S3);
+		MOV(S6,S4);
 	scamp7_kernel_end();
 
 	for(int gy = 0; gy < 255/gs_height ; gy++)
 	{
 		scamp7_dynamic_kernel_begin();//CAN MAKE X6 FASTER BY REMOVING DYNAMIC
-			for(int tmp_y = 0 ; tmp_y < gs_height ; tmp_y++)
+			for(int tmp_x = 0 ; tmp_x < gs_height ; tmp_x++)
 			{
-				DNEWS0(S4,S5);
-				MOV(S5,S4);
+				MOV(FLAG,S6);
+				DNEWS0(S6,FLAG);
 			}
-			MOV(S4,S3);
-			OR(S3,S5,S4);
+			OR(S4,S6);
 		scamp7_dynamic_kernel_end();
 	}
+
+	scamp7_kernel_begin();
+		CLR(RE,RW,RN,RS);
+		MOV(RW,S5);
+		MOV(RS,S4);
+		ALL();
+	scamp7_kernel_end();
 }
+
+
