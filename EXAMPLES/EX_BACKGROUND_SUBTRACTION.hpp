@@ -74,7 +74,6 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //CAPTURE FRAME
 
-        	scamp7_in(D,motion_threshold);
 			scamp7_kernel_begin();
 				mov(E, AREG_captured_image);//store a copy previous frame
 				get_image(AREG_captured_image, F);	//get new frame
@@ -83,6 +82,7 @@ int main()
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//DETECT MOTION BY FRAME DIFFERENCING
 
+        	scamp7_in(D,motion_threshold);
 			scamp7_kernel_begin();
 				//Compute absolute difference between latest frame and previous frame
 				sub(F,AREG_captured_image,E);// E = difference between latest and previous frame
