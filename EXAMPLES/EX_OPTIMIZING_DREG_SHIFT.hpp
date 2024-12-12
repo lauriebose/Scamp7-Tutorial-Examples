@@ -7,15 +7,24 @@ int main()
 {
     vs_init();
 
-    int display_size = 2;
+	VS_GUI_DISPLAY_STYLE(style_plot,R"JSON(
+			{
+				"plot_palette": "plot_4",
+				"plot_palette_groups": 3
+			}
+			)JSON");
+
+    int display_size = 1;
     auto display_00 = vs_gui_add_display("scamp_shift()",0,0,display_size);
     auto display_01 = vs_gui_add_display("simple_shift",0,display_size,display_size);
-    auto display_02 = vs_gui_add_display("batched_shift",0,display_size*2,display_size);
+    auto display_02 = vs_gui_add_display("batched_shift",display_size,0,display_size);
+    auto display_03 = vs_gui_add_display("White:scamp_shift(),  Green:Simple shift,  Red:Batched shift",0,display_size*2,display_size*2,style_plot);
+    vs_gui_set_scope(display_03,0,80,256);
 
     int threshold = 0;
     vs_gui_add_slider("threshold",-127,127,threshold,&threshold);
 
-    int shiftx = 0;
+    int shiftx = 32;
     vs_gui_add_slider("shift x",-64,64,shiftx,&shiftx);
     int shifty = 0;
     vs_gui_add_slider("shift y",-64,64,shifty,&shifty);
@@ -76,6 +85,14 @@ int main()
   	   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
   	   //OUTPUT
 
+  	    //Post data for plot of execution times of each method
+  		int32_t plot_data[3];
+  		plot_data[0] = batched_shift_time;
+  		plot_data[1] = simple_shift_time;
+  		plot_data[2] = library_shift_time;
+		vs_post_set_channel(display_03);
+		vs_post_int32(plot_data,1,3);
+
         vs_post_text("Execution Times : Batched Shift %d, Simple Shift %d, scamp_shift() %d \n",batched_shift_time, simple_shift_time, library_shift_time);
 
 		scamp7_output_image(S1,display_00);
@@ -90,6 +107,7 @@ void perform_batched_DNEWS_iterations_S5_S6(int remaining_iterations)
 {
 	while(remaining_iterations > 0)
 	{
+
 		if(remaining_iterations % 8 == 0)//Check if remaining shift is divisible by 8
 		{
 			scamp7_kernel_begin();//Kernel to shift data 8 times
