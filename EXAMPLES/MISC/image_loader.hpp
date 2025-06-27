@@ -17,7 +17,7 @@ protected:
 	uint16_t image_index_last;
 	bool do_reverse;
 	vs_handle progress_bar;
-	int16_t playback_state;
+	int16_t playback_direction;
 	int16_t playback_progress;
 	int16_t verbose_mode;
 	uint16_t image_index;
