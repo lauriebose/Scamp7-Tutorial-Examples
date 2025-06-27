@@ -18,7 +18,7 @@ protected:
 	bool ping_pong_playback;
 	vs_handle progress_bar;
 	int16_t playback_direction;
-	int16_t playback_progress;
+	int playback_speed;
 	int16_t verbose_mode;
 	int image_index;
 	uint16_t image_width;

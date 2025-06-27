@@ -15,7 +15,6 @@ scamp7_image_loader::scamp7_image_loader(AREG _dst1,DREG _dst2,AREG _tmp1,DREG _
 	image_index_last = 0;
 	image_index = 0;
 	progress_bar = NULL;
-	playback_progress = 0;
 	waiting_callback = NULL;
 
 	_areg_dst_in = std::bind(scamp7_in,_dst1,_1);
@@ -158,15 +157,16 @@ void scamp7_image_loader::load_bits_image(const char*filepath,const std::initial
 
 
 void scamp7_image_loader::add_gui_items(){
-	progress_bar = vs_gui_add_slider("video time: ",0,1000,0,NULL);
+	progress_bar = vs_gui_add_slider("video time: ",image_index_first,image_index_last,0,NULL);
 	vs_on_gui_update(progress_bar,[this](int32_t new_value){
-		if(new_value!=playback_progress){
+		if(new_value != image_index)
+		{
 			vs_post_text("%s video time: %d\n",CSTR_MODULE_NAME,new_value);
-			playback_progress = new_value;
-			image_index = image_index_first;
-			image_index += (image_index_last - image_index_first)*playback_progress/1000;
+			image_index = new_value;
 		}
 	});
+
+	vs_gui_add_slider("playback speed: ",-5,5,playback_speed,&playback_speed);
 }
 
 
@@ -177,13 +177,17 @@ void scamp7_image_loader::init_video_frames(const char*filepath,uint16_t first_i
 	ping_pong_playback = perform_ping_pong_playback;
 	image_index = -1;
 	playback_direction = 1;
-	playback_progress = 0;
 }
 
 
-void scamp7_image_loader::_load_video_frame(int index_change,int type,bool centering)
+void scamp7_image_loader::_load_video_frame(int index_change = -1,int type = 2,bool centering = true)
 {
 	char filepath[256] = "";
+
+	if(index_change = -1)
+	{
+		index_change = playback_speed;
+	}
 
 	if(vs_gui_request_done() && vs_gui_is_on())
 	{
@@ -227,10 +231,9 @@ void scamp7_image_loader::_load_video_frame(int index_change,int type,bool cente
 			vs_post_text("%s %s\n",CSTR_MODULE_NAME,filepath);
 		}
 
-		playback_progress = 1000*(image_index - image_index_first)/(image_index_last - image_index_first);
 		if(progress_bar)
 		{
-			vs_gui_move_slider(progress_bar,playback_progress,false);
+			vs_gui_move_slider(progress_bar,image_index,false);
 		}
 
 		switch(type)
