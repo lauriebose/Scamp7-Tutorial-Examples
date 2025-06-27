@@ -176,85 +176,73 @@ void scamp7_image_loader::init_video_frames(const char*filepath,uint16_t first_i
 	image_index_last = last_idx;
 	do_reverse = reverse;
 	image_index = -1;
-	playback_state = 0;
+	playback_direction = 1;
 	playback_progress = 0;
 }
 
 
-void scamp7_image_loader::_load_video_frame(int idx_inc,int type,bool centering){
+void scamp7_image_loader::_load_video_frame(int index_change,int type,bool centering)
+{
 	char filepath[256] = "";
 
 	if(vs_gui_request_done() && vs_gui_is_on())
 	{
-		int bit = 0;
-
-		if(playback_state==1)
+		image_index += index_change * playback_direction;
+		if(image_index <= image_index_first)
 		{
-			image_index -= idx_inc;
-			if(image_index < image_index_first)
+			if(do_reverse)
 			{
-				image_index = image_index_first + 1;
-				playback_state = 0;
+				playback_direction *=-1;
+				image_index = image_index_first;
+			}
+			else
+			{
+				image_index = image_index_last;
 			}
 		}
 		else
 		{
-			image_index += idx_inc;
-			if(image_index > image_index_last)
+			if(image_index >= image_index_last)
 			{
 				if(do_reverse)
 				{
-					playback_state = 1;
-					image_index = image_index_last - 1;
+					playback_direction *=-1;
+					image_index = image_index_last;
 				}
 				else
 				{
 					image_index = image_index_first;
 				}
 			}
-			else
-			{
-				if(image_index < image_index_first)
-				{
-					if(do_reverse)
-					{
-						playback_state = 1;
-						image_index = image_index_first + 1;
-					}
-					else
-					{
-						image_index = image_index_last;
-					}
-				}
-			}
 		}
 
 		snprintf(filepath,256,filepath_format,image_index);
-		if(verbose_mode){
+		if(verbose_mode)
+		{
 			vs_post_text("%s %s\n",CSTR_MODULE_NAME,filepath);
 		}
 
 		playback_progress = 1000*(image_index - image_index_first)/(image_index_last - image_index_first);
-		if(progress_bar){
+		if(progress_bar)
+		{
 			vs_gui_move_slider(progress_bar,playback_progress,false);
 		}
 
-		switch(type){
+		switch(type)
+		{
+			case 0:
+				load_dreg_image(filepath,centering);
+				break;
 
-		case 0:
-			load_dreg_image(filepath,centering);
-			break;
+			case 1:
+				load_areg_image(filepath,centering,false);
+				break;
 
-		case 1:
-			load_areg_image(filepath,centering,false);
-			break;
-
-		case 2:
-			load_areg_image(filepath,centering,true);
-			break;
+			case 2:
+				load_areg_image(filepath,centering,true);
+				break;
 		}
 
 	}
-
 }
 
