@@ -170,11 +170,11 @@ void scamp7_image_loader::add_gui_items(){
 }
 
 
-void scamp7_image_loader::init_video_frames(const char*filepath,uint16_t first_idx,uint16_t last_idx,bool reverse){
+void scamp7_image_loader::init_video_frames(const char*filepath,uint16_t first_idx,uint16_t last_idx,bool perform_ping_pong_playback){
 	filepath_format = filepath;
 	image_index_first = first_idx;
 	image_index_last = last_idx;
-	do_reverse = reverse;
+	ping_pong_playback = perform_ping_pong_playback;
 	image_index = -1;
 	playback_direction = 1;
 	playback_progress = 0;
@@ -189,11 +189,12 @@ void scamp7_image_loader::_load_video_frame(int index_change,int type,bool cente
 	{
 		if(index_change != 0)
 		{
+
 			//Update the index of the current image to load
 			image_index += index_change * playback_direction;
 			if(image_index <= image_index_first)
 			{
-				if(do_reverse)
+				if(ping_pong_playback)
 				{
 					playback_direction *=-1;
 					image_index = image_index_first;
@@ -207,7 +208,7 @@ void scamp7_image_loader::_load_video_frame(int index_change,int type,bool cente
 			{
 				if(image_index >= image_index_last)
 				{
-					if(do_reverse)
+					if(ping_pong_playback)
 					{
 						playback_direction *=-1;
 						image_index = image_index_last;

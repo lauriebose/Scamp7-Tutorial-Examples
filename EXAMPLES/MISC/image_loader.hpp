@@ -15,12 +15,12 @@ protected:
 	const char*filepath_format;
 	uint16_t image_index_first;
 	uint16_t image_index_last;
-	bool do_reverse;
+	bool ping_pong_playback;
 	vs_handle progress_bar;
 	int16_t playback_direction;
 	int16_t playback_progress;
 	int16_t verbose_mode;
-	uint16_t image_index;
+	int image_index;
 	uint16_t image_width;
 	uint16_t image_height;
 	scamp7_kernel kernel_1;

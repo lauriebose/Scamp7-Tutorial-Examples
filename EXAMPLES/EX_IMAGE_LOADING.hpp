@@ -24,16 +24,20 @@ int main()
 		int use_4bit_image_output = 1;
 		vs_gui_add_switch("use_4bit_image_output",1,&use_4bit_image_output);
 
+		//This will add a slider letting us directly select
 		image_loader.add_gui_items();
 
 		int playback_speed = 0;
 		vs_gui_add_slider("playback_speed ",-5,5,playback_speed,&playback_speed);
 
-		const char*video_filepath = "C:/Users/lauri/Desktop/gaze_frames/gaze_frames/%d.bmp";
 
+	//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	//SETUP IMAGE LOADER
+
+		const char*video_filepath = "C:/Users/lauri/Desktop/gaze_frames_sample/%d.bmp";
 		int first_index = 1;
-		int last_index = 1000;
-		bool load_in_reverse = false;
+		int last_index = 200;
+		bool load_in_reverse = true;
 		image_loader.init_video_frames(video_filepath,first_index,last_index,load_in_reverse);
 
     //CONTINOUS FRAME LOOP
