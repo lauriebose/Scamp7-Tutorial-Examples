@@ -187,31 +187,35 @@ void scamp7_image_loader::_load_video_frame(int index_change,int type,bool cente
 
 	if(vs_gui_request_done() && vs_gui_is_on())
 	{
-		image_index += index_change * playback_direction;
-		if(image_index <= image_index_first)
+		if(index_change != 0)
 		{
-			if(do_reverse)
-			{
-				playback_direction *=-1;
-				image_index = image_index_first;
-			}
-			else
-			{
-				image_index = image_index_last;
-			}
-		}
-		else
-		{
-			if(image_index >= image_index_last)
+			//Update the index of the current image to load
+			image_index += index_change * playback_direction;
+			if(image_index <= image_index_first)
 			{
 				if(do_reverse)
 				{
 					playback_direction *=-1;
-					image_index = image_index_last;
+					image_index = image_index_first;
 				}
 				else
 				{
-					image_index = image_index_first;
+					image_index = image_index_last;
+				}
+			}
+			else
+			{
+				if(image_index >= image_index_last)
+				{
+					if(do_reverse)
+					{
+						playback_direction *=-1;
+						image_index = image_index_last;
+					}
+					else
+					{
+						image_index = image_index_first;
+					}
 				}
 			}
 		}
