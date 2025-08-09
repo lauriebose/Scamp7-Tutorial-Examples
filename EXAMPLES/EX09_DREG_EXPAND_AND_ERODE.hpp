@@ -10,6 +10,66 @@ vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
 vs_stopwatch areg_shift_timer;
 
+void stepwise_expand_S6(int steps)
+{
+	scamp7_kernel_begin();
+		CLR(RN,RS,RE,RW);
+	scamp7_kernel_end();
+	for(int n = 0 ; n < steps/4; n++)
+	{
+		scamp7_kernel_begin();
+			SET(RN);
+			DNEWS0(S5,S6);//S6 will contain 1s at locations that S5 will expand into this step
+			OR(S6,S5);//Combine expanded locations with S5 itself
+			CLR(RN);
+			SET(RS);
+			DNEWS0(S5,S6);//S6 will contain 1s at locations that S5 will expand into this step
+			OR(S6,S5);//Combine expanded locations with S5 itself
+			CLR(RS);
+			SET(RE);
+			DNEWS0(S5,S6);//S6 will contain 1s at locations that S5 will expand into this step
+			OR(S6,S5);//Combine expanded locations with S5 itself
+			CLR(RE);
+			SET(RW);
+			DNEWS0(S5,S6);//S6 will contain 1s at locations that S5 will expand into this step
+			OR(S6,S5);//Combine expanded locations with S5 itself
+			CLR(RW);
+		scamp7_kernel_end();
+	}
+
+	int substeps = steps%4;
+	if(substeps > 0)
+	{
+		scamp7_kernel_begin();
+			CLR(RN,RS,RE,RW);
+			SET(RE);
+			DNEWS0(S5,S6);//S6 will contain 1s at locations that S5 will expand into this step
+			OR(S6,S5);//Combine expanded locations with S5 itself
+		scamp7_kernel_end();
+		substeps--;
+	}
+	if(substeps > 0)
+	{
+		scamp7_kernel_begin();
+			CLR(RE);
+			SET(RN);
+			DNEWS0(S5,S6);//S6 will contain 1s at locations that S5 will expand into this step
+			OR(S6,S5);//Combine expanded locations with S5 itself
+		scamp7_kernel_end();
+		substeps--;
+	}
+	if(substeps > 0)
+	{
+		scamp7_kernel_begin();
+			CLR(RN);
+			SET(RW);
+			DNEWS0(S5,S6);//S6 will contain 1s at locations that S5 will expand into this step
+			OR(S6,S5);//Combine expanded locations with S5 itself
+		scamp7_kernel_end();
+		substeps--;
+	}
+}
+
 int main()
 {
     vs_init();
@@ -67,62 +127,17 @@ int main()
 
   			areg_shift_timer.reset();
 
-
-
   			//Perform expansion steps
   			{
-//  				if(expansion_steps > 0)
-//  				{
-//  					scamp7_kernel_begin();
-//						DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
-//						OR(S0,S6);//Combine expanded locations with S0 itself
-//					scamp7_kernel_end();
-//  				}
-
   				if(use_stepwise)
   				{
   					scamp7_kernel_begin();
-						SET(RN,RS,RE,RW);
+						MOV(S6,S0);//Copy S0 to S5
 					scamp7_kernel_end();
-					for(int n = 0 ; n < expansion_steps/4; n++)
-					{
-						scamp7_kernel_begin();
-							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
-							OR(S0,S6);//Combine expanded locations with S0 itself
-						scamp7_kernel_end();
-					}
-
-					int substeps = expansion_steps%4;
-					if(substeps > 0)
-					{
-						scamp7_kernel_begin();
-							CLR(RN,RS,RE,RW);
-							SET(RE);
-							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
-							OR(S0,S6);//Combine expanded locations with S0 itself
-						scamp7_kernel_end();
-						substeps--;
-					}
-					if(substeps > 0)
-					{
-						scamp7_kernel_begin();
-							CLR(RE);
-							SET(RN);
-							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
-							OR(S0,S6);//Combine expanded locations with S0 itself
-						scamp7_kernel_end();
-						substeps--;
-					}
-					if(substeps > 0)
-					{
-						scamp7_kernel_begin();
-							CLR(RN);
-							SET(RW);
-							DNEWS0(S6,S0);//S6 will contain 1s at locations that S0 will expand into this step
-							OR(S0,S6);//Combine expanded locations with S0 itself
-						scamp7_kernel_end();
-						substeps--;
-					}
+  					stepwise_expand_S6(expansion_steps);
+  					scamp7_kernel_begin();
+						MOV(S0,S6);//Copy the expanded result in from S5 back into S0
+					scamp7_kernel_end();
   				}
   				else
   				{
@@ -141,22 +156,35 @@ int main()
 
   			//Perform erosion steps
   			{
-				scamp7_kernel_begin();
-					NOT(S1,S0);//invert DREG content
-				scamp7_kernel_end();
-
-				//expand inverted content
-				for(int n = 0 ; n < erosion_steps ; n++)
+  				if(use_stepwise)
 				{
+  					scamp7_kernel_begin();
+						NOT(S6,S0);//invert DREG content
+					scamp7_kernel_end();
+					stepwise_expand_S6(erosion_steps); 	//expand inverted content
 					scamp7_kernel_begin();
-						DNEWS0(S6,S1);
-						OR(S1,S6);
+						NOT(S0,S6);//invert back again
 					scamp7_kernel_end();
 				}
+  				else
+  				{
+					scamp7_kernel_begin();
+						NOT(S5,S0);//invert DREG content
+					scamp7_kernel_end();
 
-				scamp7_kernel_begin();
-					NOT(S0,S1);//invert back again
-				scamp7_kernel_end();
+					//expand inverted content
+					for(int n = 0 ; n < erosion_steps ; n++)
+					{
+						scamp7_kernel_begin();
+							DNEWS0(S6,S5);
+							OR(S5,S6);
+						scamp7_kernel_end();
+					}
+
+					scamp7_kernel_begin();
+						NOT(S0,S5);//invert back again
+					scamp7_kernel_end();
+  				}
   			}
 
 
