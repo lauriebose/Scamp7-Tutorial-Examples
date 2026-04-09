@@ -38,4 +38,5 @@
 //#include "EXAMPLES/EX_SIMPLE_IMAGE_STABILIZATION.hpp"
 //#include "EXAMPLES/EX_IMAGE_LOADING.hpp"
 //#include "EXAMPLES/TEST.hpp"
-#include "EXAMPLES/EX_BAR_PLOT.hpp"
+//#include "EXAMPLES/EX_BAR_PLOT.hpp"
+#include "EXAMPLES/EX_BLOBS_TO_POINTS.hpp"
