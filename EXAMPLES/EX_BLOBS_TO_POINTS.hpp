@@ -17,7 +17,8 @@ int main()
 		int disp_size = 1;
 		auto display_00 = vs_gui_add_display("Captured Image, AREG A",0,0,disp_size);
 		auto display_01 = vs_gui_add_display("Threshold, AREG C",0,disp_size,disp_size);
-		auto display_02 = vs_gui_add_display("Thresholded Image, DREG S0 (""where"" A-C > 0)",0,disp_size*2,disp_size);
+		auto display_02 = vs_gui_add_display("",0,disp_size*2,disp_size);
+		auto display_03 = vs_gui_add_display("",0,disp_size*3,disp_size);
 
     //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     //SETUP GUI ELEMENTS & CONTROLLABLE VARIABLES
@@ -40,6 +41,17 @@ int main()
 		int expand_and_sweep_elimination = 1;
 		vs_gui_add_slider("sweep_elimination",0,16,expand_and_sweep_elimination,&expand_and_sweep_elimination);
 
+		int constant_operation = 1;
+		vs_gui_add_switch("constant_operation",constant_operation == 1,&constant_operation);
+
+		bool store_thresholded_image = true;
+		auto gui_btn_store_thresholded_image = vs_gui_add_button("store_thresholded_image");
+		vs_on_gui_update(gui_btn_store_thresholded_image,[&](int32_t new_value)
+		{
+			store_thresholded_image = true;
+	   });
+
+
     //CONTINOUS FRAME LOOP
     while(true)
     {
@@ -51,28 +63,37 @@ int main()
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         //CAPTURE FRAME AND PERFORM THRESHOLDING
 
-        	//load threshold value into C across all PEs
-			scamp7_in(C,threshold_value);
-
 			scamp7_kernel_begin();
 				//A = pixel data of latest frame, F = intermediate result
 				get_image(A,F);
-
-				//C = (A - C) == (latest frame pixel - threshold)
-				sub(F,A,C);
-
-				//sets FLAG = 1 in PEs where F > 0 (i.e. where A > C), else FLAG = 0
-				where(F);
-					//copy FLAG into S0
-					MOV(S0,FLAG);
-					MOV(S1,FLAG);
-				all();
 			scamp7_kernel_end();
+
+			if(store_thresholded_image || constant_operation == 1)
+			{
+	        	//load threshold value into C across all PEs
+				scamp7_in(C,threshold_value);
+
+				scamp7_kernel_begin();
+					//C = (A - C) == (latest frame pixel - threshold)
+					sub(F,A,C);
+
+					//sets FLAG = 1 in PEs where F > 0 (i.e. where A > C), else FLAG = 0
+					where(F);
+						//copy FLAG into S0
+						MOV(S0,FLAG);
+						MOV(S1,FLAG);
+					all();
+				scamp7_kernel_end();
+				store_thresholded_image = false;
+			}
 
 		//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//REDUCE DIGITAL CONTENT TO SPARSE POINNTS
 
 			const dreg_t DREG_TO_REDUCE = S0;
+			scamp7_kernel_begin();
+				MOV(DREG_TO_REDUCE,S1);
+			scamp7_kernel_end();
 
 			reduction_timer.reset();
 			if(use_optimized_reduction == 0)
@@ -106,14 +127,14 @@ int main()
 				if(expand_and_sweep_elimination> 0)
 				{
 					//REMAINING 1S DO NOT HAVE NEIGHOURING 1S DIRECTLY TO THE RIGHT OR ABOVE
-					//HOWEVER MAY HAVE "NEIGHBOURS" ADJACENT TO THEM ON THE DIAGONALS
-					//NEED TO ELIMINATE THESE DIAGONAL "NEIGHBOURS"
+					//HOWEVER MAY HAVE OTHER "NEIGHBOURS" CLOSEBY THAT WE SHOULD ELIMINATE
 
-					//COPY CURRENT RESULT AND SPREAD HORIZONTALLY IN BOTH DIRECTIONS
+					//SHIFT AND SPREAD OF COPY OF CURRENT RESULT HORIZONTALLY IN ONE DIRECTION
+					//USE THIS TO ELIMINATE "NEIGHBOURS" ALIGNED HORIZONTALLY IN THE SAME ROW
 					scamp7_kernel_begin();
-						MOV(S6,DREG_TO_REDUCE);
-						CLR(RN,RS);
-						SET(RE,RW);
+						CLR(RN,RS,RW);
+						SET(RE);
+						DNEWS0(S6,DREG_TO_REDUCE);
 					scamp7_kernel_end();
 					for(int n = 0 ; n < expand_and_sweep_elimination ; n++)
 					{
@@ -122,6 +143,26 @@ int main()
 							OR(S6,S5);
 						scamp7_kernel_end();
 					}
+					scamp7_kernel_begin();
+
+						//FLIP SHIFTED AND SPREAD RESULT AND USE IT TO ELIMINATE (LEFT?) HORIZONTAL NEIGHBOURS
+						NOT(S5,S6);
+						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
+
+						//NOW TO CREATE A MASK TO ELMINATE "NEIGHBOURS" BELOW
+						//COMBINE WITH REMAINING 1S AND SPREAD HORIZONALLY IN OPPOSITE DIRECTION
+						OR(S6,DREG_TO_REDUCE);
+						CLR(RN,RS,RE);
+						SET(RW);
+					scamp7_kernel_end();
+					for(int n = 0 ; n < expand_and_sweep_elimination ; n++)
+					{
+						scamp7_kernel_begin();
+							DNEWS0(S5,S6);
+							OR(S6,S5);
+						scamp7_kernel_end();
+					}
+
 
 					//NOW SPREAD VERTICALLY DOWN
 					scamp7_kernel_begin();
@@ -136,11 +177,14 @@ int main()
 						scamp7_kernel_end();
 					}
 
-					//SHIFT COPY DOWNWARDS, INVERT, PERFROM AND WITH UNSHIFTED CONTENT
+
 					scamp7_kernel_begin();
+						//NOW SHIFT DOWNWARDS ONCE
 						CLR(RN,RS,RE,RW);
 						SET(RN);
 						DNEWS0(S5,S6);
+
+						//INVERT AND USE TO ELIMINATE VERTICAL "NEIGHBOURS"
 						NOT(S6,S5);
 						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S6);
 					scamp7_kernel_end();
@@ -148,59 +192,77 @@ int main()
 			}
 			else
 			{
-				const int fixed_expand_and_sweep_eliminations = 5;
+				//OPTIMIZED VERSION
+				{
+					const int fixed_expand_and_sweep_eliminations = 5;
 
-				scamp7_kernel_begin();
-					//ELIMINSTATE ALL 1S WHICH HAVE A 1 TO THE RIGHT OF THEM
-					//SHIFT HORIZONTALLY, INVERT, AND WITH UNSHIFTED
-					CLR(RN,RS,RE,RW);
-					SET(RE);
-					DNEWS0(S6,DREG_TO_REDUCE);
-					NOT(S5,S6);
-					AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
+					scamp7_kernel_begin();
+						//ELIMINSTATE ALL 1S WHICH HAVE A 1 TO THE RIGHT OF THEM
+						//SHIFT HORIZONTALLY, INVERT, AND WITH UNSHIFTED
+						CLR(RN,RS,RE,RW);
+						SET(RE);
+						DNEWS0(S6,DREG_TO_REDUCE);
+						NOT(S5,S6);
+						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
 
+						//ELIMINSTATE ALL 1S WHICH HAVE A 1 ABOVE THEM
+						//SHIFT VERTICALLY, INVERT, AND WITH UNSHIFTED
+						CLR(RN,RS,RE,RW);
+						SET(RN);
+						DNEWS0(S6,DREG_TO_REDUCE);
+						NOT(S5,S6);
+						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
+					scamp7_kernel_end();
 
-					//ELIMINSTATE ALL 1S WHICH HAVE A 1 ABOVE THEM
-					//SHIFT VERTICALLY, INVERT, AND WITH UNSHIFTED
-					CLR(RE);
-					SET(RN);
-					DNEWS0(S6,DREG_TO_REDUCE);
-					NOT(S5,S6);
-					AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
-				scamp7_kernel_end();
+					//REMAINING 1S DO NOT HAVE NEIGHOURING 1S DIRECTLY TO THE RIGHT OR ABOVE
+					//HOWEVER MAY HAVE OTHER "NEIGHBOURS" CLOSEBY THAT WE SHOULD ELIMINATE
 
+					scamp7_kernel_begin();
+						//SHIFT AND SPREAD OF COPY OF CURRENT RESULT HORIZONTALLY IN ONE DIRECTION
+						//USE THIS TO ELIMINATE "NEIGHBOURS" ALIGNED HORIZONTALLY IN THE SAME ROW
+						CLR(RN,RS,RW);
+						SET(RE);
+						DNEWS0(S6,DREG_TO_REDUCE);
+						for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
+						{
+								DNEWS0(S5,S6);
+								OR(S6,S5);
+						}
 
-				//REMAINING 1S DO NOT HAVE NEIGHOURING 1S DIRECTLY TO THE RIGHT OR ABOVE
-				//HOWEVER MAY HAVE "NEIGHBOURS" ADJACENT TO THEM ON THE DIAGONALS
-				//NEED TO ELIMINATE THESE DIAGONAL "NEIGHBOURS"
-				scamp7_kernel_begin();
-					//COPY CURRENT RESULT AND SPREAD HORIZONTALLY IN BOTH DIRECTIONS
-					MOV(S6,DREG_TO_REDUCE);
-					CLR(RN,RS);
-					SET(RE,RW);
-					for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
-					{
+						//FLIP SHIFTED AND SPREAD RESULT AND USE IT TO ELIMINATE (LEFT?) HORIZONTAL NEIGHBOURS
+						NOT(S5,S6);
+						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
+
+						//NOW TO CREATE A MASK TO ELMINATE "NEIGHBOURS" BELOW
+						//COMBINE WITH REMAINING 1S AND SPREAD HORIZONALLY IN OPPOSITE DIRECTION
+						OR(S6,DREG_TO_REDUCE);
+						CLR(RN,RS,RE);
+						SET(RW);
+						for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
+						{
+							DNEWS0(S5,S6);
+							OR(S6,S5);
+						}
+					scamp7_kernel_end();
+
+					scamp7_kernel_begin();
+						//NOW SPREAD VERTICALLY DOWN
+						CLR(RE,RW,RS);
+						SET(RN);
+						for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
+						{
+							DNEWS0(S5,S6);
+							OR(S6,S5);
+						}
+
+						//NOW SHIFT DOWNWARDS ONCE
 						DNEWS0(S5,S6);
-						OR(S6,S5);
-					}
 
-					//NOW SPREAD VERTICALLY DOWN
-					CLR(RE,RW,RS);
-					SET(RN);
-					for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
-					{
-						DNEWS0(S5,S6);
-						OR(S6,S5);
-					}
-
-					//SHIFT COPY DOWNWARDS, INVERT, PERFROM AND WITH UNSHIFTED CONTENT
-					CLR(RS,RE,RW);
-					SET(RN);
-					DNEWS0(S5,S6);
-					NOT(S6,S5);
-					AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S6);
-				scamp7_kernel_end();
-
+						//INVERT AND USE TO ELIMINATE VERTICAL "NEIGHBOURS"
+						NOT(S6,S5);
+						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S6);
+					scamp7_kernel_end();
+				}
 			}
 
 			int reduction_time = reduction_timer.get_usec();
@@ -211,6 +273,12 @@ int main()
         //OUTPUT IMAGES
 
 			output_timer.reset();
+
+
+			scamp7_output_image(S1,display_01);
+			scamp7_output_image(S6,display_02);//display thresholded image
+			scamp7_output_image(S0,display_03);//display thresholded image
+
 			if(output_image)
 			{
 				//output AREG quickly using 4bit approximation
@@ -218,8 +286,6 @@ int main()
 //				output_4bit_image_via_DNEWS(C,display_01);
 			}
 
-			scamp7_output_image(S1,display_01);
-			scamp7_output_image(S0,display_02);//display thresholded image
 			int output_time_microseconds = output_timer.get_usec();//get the time taken for image output
 
 	    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
