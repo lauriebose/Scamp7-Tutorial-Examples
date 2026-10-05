@@ -196,71 +196,73 @@ int main()
 				{
 					const int fixed_expand_and_sweep_eliminations = 5;
 
+					//AVOID DNEWS(S6.... AS THIS SEEMS TO HAVE MANY ERRORS, USING DNEWS(RM, INSTEAD
 					scamp7_kernel_begin();
+						SET(RF);//SET AS WE WILL USE RM
+
 						//ELIMINSTATE ALL 1S WHICH HAVE A 1 TO THE RIGHT OF THEM
 						//SHIFT HORIZONTALLY, INVERT, AND WITH UNSHIFTED
 						CLR(RN,RS,RE,RW);
 						SET(RE);
-						DNEWS0(S6,DREG_TO_REDUCE);
-						NOT(S5,S6);
+						DNEWS0(RM,DREG_TO_REDUCE);
+						NOT(S5,RM);
 						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
+						SET(RF);//SET AS WE WILL USE RM
 
 						//ELIMINSTATE ALL 1S WHICH HAVE A 1 ABOVE THEM
 						//SHIFT VERTICALLY, INVERT, AND WITH UNSHIFTED
 						CLR(RN,RS,RE,RW);
 						SET(RN);
-						DNEWS0(S6,DREG_TO_REDUCE);
-						NOT(S5,S6);
+						DNEWS0(RM,DREG_TO_REDUCE);
+						NOT(S5,RM);
 						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
-					scamp7_kernel_end();
+						SET(RF);//SET AS WE WILL USE RM
 
-					//REMAINING 1S DO NOT HAVE NEIGHOURING 1S DIRECTLY TO THE RIGHT OR ABOVE
-					//HOWEVER MAY HAVE OTHER "NEIGHBOURS" CLOSEBY THAT WE SHOULD ELIMINATE
+						//REMAINING 1S DO NOT HAVE NEIGHOURING 1S DIRECTLY TO THE RIGHT OR ABOVE
+						//HOWEVER MAY HAVE OTHER "NEIGHBOURS" CLOSEBY THAT WE SHOULD ELIMINATE
 
-					scamp7_kernel_begin();
 						//SHIFT AND SPREAD OF COPY OF CURRENT RESULT HORIZONTALLY IN ONE DIRECTION
 						//USE THIS TO ELIMINATE "NEIGHBOURS" ALIGNED HORIZONTALLY IN THE SAME ROW
 						CLR(RN,RS,RW);
 						SET(RE);
-						DNEWS0(S6,DREG_TO_REDUCE);
+						DNEWS0(S5,DREG_TO_REDUCE);
 						for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
 						{
-								DNEWS0(S5,S6);
-								OR(S6,S5);
+							DNEWS0(RM,S5);
+							OR(S5,RM);
 						}
 
 						//FLIP SHIFTED AND SPREAD RESULT AND USE IT TO ELIMINATE (LEFT?) HORIZONTAL NEIGHBOURS
-						NOT(S5,S6);
-						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
+						NOT(S6,S5);
+						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S6);
+						SET(RF);//SET AS WE WILL USE RM
 
 						//NOW TO CREATE A MASK TO ELMINATE "NEIGHBOURS" BELOW
 						//COMBINE WITH REMAINING 1S AND SPREAD HORIZONALLY IN OPPOSITE DIRECTION
-						OR(S6,DREG_TO_REDUCE);
+						OR(S5,DREG_TO_REDUCE);
 						CLR(RN,RS,RE);
 						SET(RW);
 						for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
 						{
-							DNEWS0(S5,S6);
-							OR(S6,S5);
+							DNEWS0(RM,S5);
+							OR(S5,RM);
 						}
-					scamp7_kernel_end();
 
-					scamp7_kernel_begin();
 						//NOW SPREAD VERTICALLY DOWN
 						CLR(RE,RW,RS);
 						SET(RN);
 						for(int n = 0 ; n < fixed_expand_and_sweep_eliminations ; n++)
 						{
-							DNEWS0(S5,S6);
-							OR(S6,S5);
+							DNEWS0(RM,S5);
+							OR(S5,RM);
 						}
 
 						//NOW SHIFT DOWNWARDS ONCE
-						DNEWS0(S5,S6);
+						DNEWS0(RM,S5);
 
 						//INVERT AND USE TO ELIMINATE VERTICAL "NEIGHBOURS"
-						NOT(S6,S5);
-						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S6);
+						NOT(S5,RM);
+						AND(DREG_TO_REDUCE,DREG_TO_REDUCE,S5);
 					scamp7_kernel_end();
 				}
 			}
