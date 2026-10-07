@@ -7,21 +7,113 @@ vs_stopwatch frame_timer;
 vs_stopwatch output_timer;
 vs_stopwatch sum_timer;
 
-//Variables used for calculating statistics for the difference global summation functions
-int sum64_max, sum64_min;
-int sum16_max, sum16_min;
-int sum_fast_max, sum_fast_min;
+namespace AUTO_EXPOSURE
+{
+	constexpr areg_t AREG_IMGAGE_REG = A;
 
-const int record_length = 100;
-int record_cntr = 0;
-std::vector<uint16_t> sum64_record(record_length);
-std::vector<uint16_t> sum16_record(record_length);
-std::vector<uint16_t> sum_fast_record(record_length);
+	vs_stopwatch timer;
 
-//Function used to compute moving average & variance of the output from each of the global summation functions
-std::pair<int, int> calculate_mean_and_variance_of_data_array(const std::vector<uint16_t>& data);
+	int use_sum_64 = true;
 
-void compute_maximum_and_minimum_of_global_sum_functions();
+	int exposure_time;
+	int exposure_target_sum;
+
+	//Variables used for calculating statistics for the difference global summation functions
+	int sum64_max, sum64_min,sum64_result_normalised;
+	int sum16_max, sum16_min,sum16_result_normalised;
+
+	void calibrate_summations()
+	{
+		//Make register plane A as negative as possible
+			scamp7_in(F,-127);
+			scamp7_kernel_begin();
+				mov(A,F);
+				add(A,A,F);
+			scamp7_kernel_end();
+
+			sum64_min = scamp7_global_sum_64(A) + 1;//+1s to avoid possibility of divide by 0 later
+			sum16_min = scamp7_global_sum_16(A) + 1;
+		//	sum_fast_min = scamp7_global_sum_fast(A) + 1;
+
+			//Make register plane A as positive  as possible
+			scamp7_in(F,127);
+			scamp7_kernel_begin();
+				mov(A,F);
+				add(A,A,F);
+				add(A,A,F);
+			scamp7_kernel_end();
+
+			sum64_max = scamp7_global_sum_64(A);
+			sum16_max = scamp7_global_sum_16(A);
+		//	sum_fast_max = scamp7_global_sum_fast(A);
+	}
+
+	void update_exposure_time_with_sum_16()
+	{
+		//Calculate normalised results, places each value in the range 0-100
+		int16_t sum16_result = scamp7_global_sum_16(AREG_IMGAGE_REG);
+		sum16_result_normalised = (100*sum16_result)/(sum16_max - sum16_min);
+		exposure_time-=(sum64_result_normalised-exposure_target_sum)*10;
+
+		if(exposure_time < 0)
+		{
+			exposure_time = 0;
+		}
+	}
+
+	void update_exposure_time_with_sum_64()
+	{
+		//Calculate normalised results, places each value in the range 0-100
+		int16_t sum64_result = scamp7_global_sum_64(AREG_IMGAGE_REG);
+		sum64_result_normalised = (100*sum64_result)/(sum64_max - sum64_min);
+		exposure_time-=(sum64_result_normalised-exposure_target_sum)*10;
+
+		if(exposure_time < 0)
+		{
+			exposure_time = 0;
+		}
+	}
+
+	void update()
+	{
+		if(use_sum_64)
+		{
+			update_exposure_time_with_sum_64();
+		}
+		else
+		{
+			update_exposure_time_with_sum_16();
+		}
+	}
+
+	void capture_image()
+	{
+		int time_since_last_capture = timer.get_usec();
+
+		if(time_since_last_capture > exposure_time)
+		{
+			scamp7_kernel_begin();
+				respix();
+			scamp7_kernel_end();
+			vs_wait(exposure_time);
+			//Capture an Image
+			scamp7_kernel_begin();
+				get_image(AREG_IMGAGE_REG,E);
+			scamp7_kernel_end();
+		}
+		else
+		{
+			vs_wait(exposure_time-time_since_last_capture);
+			//Capture an Image
+			scamp7_kernel_begin();
+				get_image(AREG_IMGAGE_REG,E);
+				respix();
+			scamp7_kernel_end();
+		}
+
+		timer.reset();
+	}
+}
 
 int main()
 {
@@ -44,19 +136,10 @@ int main()
     const int plot_time_frame = 256;
     vs_gui_set_scope(display_plot,plot_min,plot_max,plot_time_frame);
 
-    int base_on_contrast = 0;
-    vs_gui_add_switch("base_on_contrast", base_on_contrast == 1, &base_on_contrast);
+    vs_gui_add_switch("use_sum_64", AUTO_EXPOSURE::use_sum_64 == 1, &AUTO_EXPOSURE::use_sum_64);
+    vs_gui_add_slider("exposure_target_sum",0,100,AUTO_EXPOSURE::exposure_target_sum,&AUTO_EXPOSURE::exposure_target_sum);
 
-    //Compute the range of possible results from each summation function
-    compute_maximum_and_minimum_of_global_sum_functions();
-
-    int exposure_time = 1;
-
-    int exposure_time_delta = 0;
-    vs_gui_add_slider("exposure_time_delta",1,1000,exposure_time_delta,&exposure_time_delta);
-
-    int exposure_target_sum = 2048;
-    vs_gui_add_slider("exposure_target_sum",0,4096,exposure_target_sum,&exposure_target_sum);
+    AUTO_EXPOSURE::calibrate_summations();
 
     // Frame Loop
     while(1)
@@ -66,116 +149,23 @@ int main()
        	vs_disable_frame_trigger();
         vs_frame_loop_control();
 
+
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//CAPTURE OR CREATE THE ANALOGUE DATA TO TEST GLOBAL SUMMATION UPON
 
+			AUTO_EXPOSURE::capture_image();
+			AUTO_EXPOSURE::update();
 
-			scamp7_kernel_begin();
-				respix();
-			scamp7_kernel_end();
-			vs_wait(exposure_time);
-			//Capture an Image
-			scamp7_kernel_begin();
-				get_image(A,E);
-				mov(B,A);
-			scamp7_kernel_end();
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        //PERFORM GLOBAL SUMMATION USING EACH FUNCTION
-
-			if(base_on_contrast)
-			{
-				//COMPUTE DYNAMIC LOCAL THRESHOLDS TO DECIDE IF PIXELS VALUE MATCH OR MISS-MATCH
-				scamp7_kernel_begin();
-					SET(RW);
-					SET(RS);
-				scamp7_kernel_end();
-				scamp7_kernel_begin();
-					//CREATE BLURRED COPY OF IMAGE
-					mov(D,A);
-					blur_repeat(D,D,1);
-
-					//COMPUTE ABSOLUTE DIFFERENCE FROM ORIGINAL IMAGE
-					sub(D,D,A);
-					abs(F,D);
-
-					//BLUR ABSOLUTE DIFFERENCE
-					mov(D,F);
-					blur_repeat(D,D,1);
-
-					divq(E,D);
-					add(D,D,E);
-
-					mov(F,D);
-				scamp7_kernel_end();
-			}
-			else
-			{
-				scamp7_kernel_begin();
-					mov(F,A);
-				scamp7_kernel_end();
-			}
-
-
-
-
-			sum_timer.reset();
-			int16_t sum64_result = scamp7_global_sum_64(F);
-			int sum64_time = sum_timer.get_usec();
-
-			sum_timer.reset();
-			int16_t sum16_result = scamp7_global_sum_16(F);
-			int sum16_time = sum_timer.get_usec();
-
-			if(sum16_result > exposure_target_sum)
-			{
-				exposure_time-=(sum16_result-exposure_target_sum);
-			}
-			else
-			{
-				exposure_time+= -(sum16_result-exposure_target_sum);
-			}
-			if(exposure_time < 0)
-			{
-				exposure_time = 0;
-			}
-
-			vs_post_text("Exposure time us %d \n",exposure_time);
-
-//			sum_timer.reset();
-//			int16_t sum_fast_result = scamp7_global_sum_fast(A);
-//			int sum_fast_time = sum_timer.get_usec();
-
-	   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	   //COMPUTE AND RECORD THE NORMALISED RESULTS FOP EACH FUNCTION
-
-			//Calculate normalised results, places each value in the range 0-100
-			int sum64_result_normalised = (100*sum64_result)/(sum64_max - sum64_min);
-			int sum16_result_normalised = (100*sum16_result)/(sum16_max - sum16_min);
-//			int sum_fast_result_normalised = (100*sum_fast_result)/(sum_fast_max - sum_fast_min);
-
-			//Record these results for computation of the moving average and variance
-			sum64_record[record_cntr] = sum64_result_normalised;
-			sum16_record[record_cntr] = sum16_result_normalised;
-//			sum_fast_record[record_cntr] = sum_fast_result_normalised;
-			record_cntr = (record_cntr+1)%record_length;//Update the cntr to the next location in the array
-
-			auto [sum64_mean, sum64_var] = calculate_mean_and_variance_of_data_array(sum64_record);
-			auto [sum16_mean, sum16_var] = calculate_mean_and_variance_of_data_array(sum16_record);
-//			auto [sum_fast_mean, sum_fast_var] = calculate_mean_and_variance_of_data_array(sum_fast_record);
+			vs_post_text("Exposure time us %d %d \n",AUTO_EXPOSURE::exposure_time,AUTO_EXPOSURE::sum64_result_normalised );
 
 	   //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	   //OUTPUT
 
-			vs_post_text("sum64 - val %d, normalised val %d, mean %d, variance %d, time %d \n",sum64_result, sum64_result_normalised,sum64_mean,sum64_var, sum64_time);
-			vs_post_text("sum16 - val %d, normalised val %d , mean %d, variance %d, time %d \n",sum16_result,sum16_result_normalised,sum16_mean,sum16_var,sum16_time);
-//			vs_post_text("sum_fast - val %d, normalised val %d , mean %d, variance %d, time %d \n",sum_fast_result,sum_fast_result_normalised,sum_fast_mean,sum_fast_var,sum_fast_time);
 
 			//Create an array of data with the latest values to plot
 			int32_t plot_data[3];
-			plot_data[0] = sum64_result_normalised;
-			plot_data[1] = sum16_result_normalised;
+			plot_data[0] = AUTO_EXPOSURE::sum64_result_normalised;
+			plot_data[1] = AUTO_EXPOSURE::sum16_result_normalised;
 //			plot_data[2] = sum_fast_result_normalised;
 			plot_data[2] = 0;
 			vs_post_set_channel(display_plot);//Set target to "post" data to, the display setup for plotting
@@ -198,55 +188,3 @@ int main()
 
     return 0;
 }
-
-std::pair<int, int> calculate_mean_and_variance_of_data_array(const std::vector<uint16_t>& data)
-{
-	//Calculate sum of all data & mean
-    int sum = 0;
-    for (uint8_t value : data)
-    {
-        sum += value;
-    }
-    int mean = sum / data.size();
-
-    //Calculate sum of squared differences from the mean
-    int sum_of_sqrd_differences = 0;
-    for (uint8_t value : data)
-    {
-        int diff = value - mean;
-        sum_of_sqrd_differences += diff * diff;
-    }
-    int variance = sum_of_sqrd_differences / data.size();
-
-    //return both mean and variance as a pair
-    return {mean, variance};
-}
-
-//Compute the maximum & minimum values for each type of summation
-void compute_maximum_and_minimum_of_global_sum_functions()
-{
-	//Make register plane A as negative as possible
-	scamp7_in(F,-127);
-	scamp7_kernel_begin();
-		mov(A,F);
-		add(A,A,F);
-	scamp7_kernel_end();
-
-	sum64_min = scamp7_global_sum_64(A) + 1;//+1s to avoid possibility of divide by 0 later
-	sum16_min = scamp7_global_sum_16(A) + 1;
-//	sum_fast_min = scamp7_global_sum_fast(A) + 1;
-
-	//Make register plane A as positive  as possible
-	scamp7_in(F,127);
-	scamp7_kernel_begin();
-		mov(A,F);
-		add(A,A,F);
-		add(A,A,F);
-	scamp7_kernel_end();
-
-	sum64_max = scamp7_global_sum_64(A);
-	sum16_max = scamp7_global_sum_16(A);
-//	sum_fast_max = scamp7_global_sum_fast(A);
-}
-
-
